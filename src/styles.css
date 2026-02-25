@@ -17,7 +17,7 @@ body,
 body {
   background: #0d1f1c;
   color: var(--ui-text, #e9f1ee);
-  font-family: Cinzel, serif;
+  font-family: Inter, "Manrope", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 
 .app-root {
@@ -86,10 +86,10 @@ body {
 
 .brand-subtitle {
   margin-top: 5px;
-  font-size: 10px;
-  letter-spacing: 0.18em;
+  font-size: 11px;
+  letter-spacing: 0.08em;
   color: var(--ui-subtext);
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .theme-picker-inline {
@@ -100,8 +100,8 @@ body {
 }
 
 .theme-picker-inline label {
-  font-size: 9px;
-  letter-spacing: 0.15em;
+  font-size: 11px;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--ui-subtext);
 }
@@ -112,9 +112,9 @@ body {
   border: 1px solid var(--ui-border);
   background: var(--ui-input-bg);
   color: var(--ui-text);
-  font-size: 11px;
-  font-family: Cinzel, serif;
-  letter-spacing: 0.08em;
+  font-size: 12px;
+  font-family: Inter, system-ui, sans-serif;
+  letter-spacing: 0.01em;
   padding: 7px 9px;
 }
 
@@ -127,10 +127,14 @@ body {
 }
 
 .section-title {
-  font-size: 9px;
-  letter-spacing: 0.28em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  font-weight: 700;
   color: var(--ui-subtext);
-  text-transform: uppercase;
+  text-transform: none;
   margin-bottom: 10px;
 }
 
@@ -145,10 +149,11 @@ body {
 .field-label {
   display: block;
   margin-bottom: 5px;
-  font-size: 9px;
-  letter-spacing: 0.17em;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  font-weight: 600;
   color: var(--ui-subtext);
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .input {
@@ -158,8 +163,8 @@ body {
   border: 1px solid var(--ui-border-soft);
   background: var(--ui-input-bg);
   color: var(--ui-text);
-  font-family: "EB Garamond", serif;
-  font-size: 15px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 14px;
   outline: none;
 }
 
@@ -182,11 +187,11 @@ body {
   background: var(--ui-chip-bg);
   color: var(--ui-subtext);
   border-radius: 999px;
-  padding: 5px 11px;
-  font-family: Cinzel, serif;
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  padding: 6px 11px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  text-transform: none;
   cursor: pointer;
 }
 
@@ -204,9 +209,9 @@ body {
 }
 
 .toggle-label {
-  font-size: 10px;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ui-subtext);
 }
 
@@ -229,9 +234,9 @@ body {
 }
 
 .color-field span {
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ui-subtext);
 }
 
@@ -293,10 +298,14 @@ body {
   color: var(--ui-text);
   border-radius: 8px;
   padding: 9px 0;
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  font-family: Cinzel, serif;
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  font-family: Inter, system-ui, sans-serif;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   cursor: pointer;
 }
 
@@ -304,12 +313,16 @@ body {
   border: 0;
   border-radius: 10px;
   padding: 12px 0;
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  text-transform: none;
   color: white;
-  font-family: Cinzel, serif;
+  font-family: Inter, system-ui, sans-serif;
   background: linear-gradient(135deg, var(--ui-accent), var(--ui-accent-dark));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   cursor: pointer;
 }
 
@@ -366,10 +379,14 @@ body {
 }
 
 .toolbar-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 9px;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-transform: none;
   color: var(--ui-subtext);
+  font-weight: 600;
 }
 
 .preview-stage {
@@ -389,9 +406,9 @@ body {
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ui-subtext);
 }
 

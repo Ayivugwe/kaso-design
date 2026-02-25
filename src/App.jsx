@@ -1,4 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Download,
+  Image as ImageIcon,
+  Import as ImportIcon,
+  LayoutTemplate,
+  Palette,
+  RotateCcw,
+  Save,
+  SlidersHorizontal,
+  Type,
+} from "lucide-react";
 
 const TEMPLATES = {
   horizontal: { label: "Horizontal" },
@@ -6,16 +17,27 @@ const TEMPLATES = {
   vertical: { label: "Vertical" },
 };
 
+const ASSET_TYPES = {
+  post: { label: "Post" },
+  header: { label: "Header" },
+  link: { label: "Link" },
+  story: { label: "Story" },
+  universal: { label: "Universal" },
+};
+
 const PLATFORMS = {
-  twitter: { label: "Twitter / X Header", w: 1500, h: 500, template: "horizontal" },
-  linkedin: { label: "LinkedIn Cover", w: 1584, h: 396, template: "horizontal" },
-  facebook: { label: "Facebook Page Cover", w: 851, h: 315, template: "horizontal" },
-  og: { label: "OG / Link Share", w: 1200, h: 630, template: "horizontal" },
-  universalLink: { label: "Universal Link (All Social)", w: 1200, h: 630, template: "horizontal" },
-  instagram: { label: "Instagram Square Post", w: 1080, h: 1080, template: "square" },
-  universalSquare: { label: "Universal Square (All Social)", w: 1080, h: 1080, template: "square" },
-  portrait: { label: "Portrait", w: 1080, h: 1350, template: "vertical" },
-  story: { label: "Story", w: 1080, h: 1920, template: "vertical" },
+  xPost: { label: "X Post", w: 1600, h: 900, template: "horizontal", assetType: "post" },
+  twitter: { label: "X Header", w: 1500, h: 500, template: "horizontal", assetType: "header" },
+  linkedinPost: { label: "LinkedIn Post", w: 1200, h: 627, template: "horizontal", assetType: "post" },
+  linkedin: { label: "LinkedIn Cover", w: 1584, h: 396, template: "horizontal", assetType: "header" },
+  facebookPost: { label: "Facebook Post", w: 1200, h: 630, template: "horizontal", assetType: "post" },
+  facebook: { label: "Facebook Page Cover", w: 851, h: 315, template: "horizontal", assetType: "header" },
+  og: { label: "OG / Link Share", w: 1200, h: 630, template: "horizontal", assetType: "link" },
+  universalLink: { label: "Universal Link (All Social)", w: 1200, h: 630, template: "horizontal", assetType: "universal" },
+  instagram: { label: "Instagram Square Post", w: 1080, h: 1080, template: "square", assetType: "post" },
+  universalSquare: { label: "Universal Square (All Social)", w: 1080, h: 1080, template: "square", assetType: "universal" },
+  portrait: { label: "Instagram Portrait Post", w: 1080, h: 1350, template: "vertical", assetType: "post" },
+  story: { label: "Story", w: 1080, h: 1920, template: "vertical", assetType: "story" },
 };
 
 const DESIGN_SURFACES = {
@@ -157,6 +179,12 @@ const ICON_STYLES = {
 };
 
 const FONT_PAIRS = {
+  readable: {
+    label: "Readable",
+    title: "'Inter',sans-serif",
+    body: "'Inter',sans-serif",
+    tag: "'Manrope',sans-serif",
+  },
   classic: {
     label: "Classic",
     title: "'Playfair Display',serif",
@@ -178,12 +206,13 @@ const FONT_PAIRS = {
 };
 
 const DEFAULT_CFG = {
+  assetType: "post",
   template: "horizontal",
-  plat: "twitter",
+  plat: "xPost",
   appTheme: "kasoDark",
   theme: "kasoLight",
   layout: "left",
-  fontPair: "classic",
+  fontPair: "readable",
   iconStyle: "tile",
   title: "Kaso",
   tagline: "Flower - Branding & Design Module",
@@ -227,6 +256,17 @@ function resolveTheme(cfg) {
 
 function resolveUiTheme(cfg) {
   return THEMES[cfg.appTheme] || THEMES.kasoDark;
+}
+
+function normalizeCfg(rawCfg) {
+  const merged = { ...DEFAULT_CFG, ...rawCfg };
+  const plat = PLATFORMS[merged.plat] ? merged.plat : DEFAULT_CFG.plat;
+  return {
+    ...merged,
+    plat,
+    template: PLATFORMS[plat].template,
+    assetType: PLATFORMS[plat].assetType,
+  };
 }
 
 function hexToRgb(hex) {
@@ -667,10 +707,13 @@ function PreviewCard({ cfg }) {
   );
 }
 
-function Section({ title, children }) {
+function Section({ title, icon: Icon, children }) {
   return (
     <div className="section">
-      <div className="section-title">{title}</div>
+      <div className="section-title">
+        {Icon ? <Icon size={13} /> : null}
+        <span>{title}</span>
+      </div>
       {children}
     </div>
   );
@@ -710,7 +753,7 @@ export default function App() {
   const [cfg, setCfg] = useState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? { ...DEFAULT_CFG, ...JSON.parse(raw) } : DEFAULT_CFG;
+      return raw ? normalizeCfg(JSON.parse(raw)) : DEFAULT_CFG;
     } catch {
       return DEFAULT_CFG;
     }
@@ -758,19 +801,41 @@ export default function App() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
   }, [cfg]);
 
-  const platformOptions = useMemo(() => {
-    return Object.entries(PLATFORMS)
-      .filter(([, v]) => v.template === cfg.template)
-      .map(([k, v]) => ({ value: k, label: v.label }));
-  }, [cfg.template]);
-
-  const setTemplate = useCallback((template) => {
-    const firstPlatform = Object.entries(PLATFORMS).find(([, v]) => v.template === template)?.[0] || "twitter";
-    setCfg((p) => ({ ...p, template, plat: firstPlatform }));
+  const pickPlatform = useCallback((template, assetType, fallback) => {
+    const entries = Object.entries(PLATFORMS);
+    return (
+      entries.find(([, v]) => v.template === template && v.assetType === assetType)?.[0] ||
+      entries.find(([, v]) => v.assetType === assetType)?.[0] ||
+      entries.find(([, v]) => v.template === template)?.[0] ||
+      fallback ||
+      DEFAULT_CFG.plat
+    );
   }, []);
 
+  const platformOptions = useMemo(() => {
+    const exact = Object.entries(PLATFORMS).filter(([, v]) => v.template === cfg.template && v.assetType === cfg.assetType);
+    const fallback = Object.entries(PLATFORMS).filter(([, v]) => v.template === cfg.template);
+    const source = exact.length ? exact : fallback;
+    return source
+      .map(([k, v]) => ({ value: k, label: v.label }));
+  }, [cfg.template, cfg.assetType]);
+
+  const setTemplate = useCallback((template) => {
+    setCfg((p) => {
+      const plat = pickPlatform(template, p.assetType, p.plat);
+      return { ...p, template, plat, assetType: PLATFORMS[plat].assetType };
+    });
+  }, [pickPlatform]);
+
+  const setAssetType = useCallback((assetType) => {
+    setCfg((p) => {
+      const plat = pickPlatform(p.template, assetType, p.plat);
+      return { ...p, assetType, plat, template: PLATFORMS[plat].template };
+    });
+  }, [pickPlatform]);
+
   const setPlatform = useCallback((plat) => {
-    setCfg((p) => ({ ...p, plat, template: PLATFORMS[plat].template }));
+    setCfg((p) => ({ ...p, plat, template: PLATFORMS[plat].template, assetType: PLATFORMS[plat].assetType }));
   }, []);
 
   const setAppThemeKey = useCallback((themeKey) => {
@@ -839,9 +904,7 @@ export default function App() {
     reader.onload = () => {
       try {
         const parsed = JSON.parse(String(reader.result || "{}"));
-        const merged = { ...DEFAULT_CFG, ...parsed };
-        const plat = PLATFORMS[merged.plat] ? merged.plat : DEFAULT_CFG.plat;
-        setCfg({ ...merged, plat, template: PLATFORMS[plat].template });
+        setCfg(normalizeCfg(parsed));
         setMessage("Preset imported.");
       } catch {
         setMessage("Import failed: invalid JSON.");
@@ -870,6 +933,7 @@ export default function App() {
           <div className="brand-title">Kaso</div>
           <div className="brand-subtitle">Flower - Branding & Design Module</div>
           <div className="theme-picker-inline">
+            <Palette size={13} />
             <label htmlFor="themeSelect">Theme</label>
             <select id="themeSelect" value={cfg.appTheme} onChange={(e) => setAppThemeKey(e.target.value)}>
               {Object.entries(THEMES).map(([k, v]) => (
@@ -881,7 +945,7 @@ export default function App() {
           </div>
         </div>
 
-        <Section title="Content">
+        <Section title="Content" icon={Type}>
           <Field label="Brand Name">
             <input value={cfg.title} onChange={(e) => set("title", e.target.value)} className="input" />
           </Field>
@@ -899,7 +963,7 @@ export default function App() {
           </Field>
         </Section>
 
-        <Section title="Look & Feel">
+        <Section title="Look & Feel" icon={Palette}>
           <Field label="Design Theme">
             <ToggleGroup value={cfg.theme} onChange={(v) => set("theme", v)} options={Object.entries(THEMES).map(([k, v]) => ({ value: k, label: v.label }))} />
           </Field>
@@ -939,7 +1003,7 @@ export default function App() {
           </Field>
         </Section>
 
-        <Section title="Icon & Details">
+        <Section title="Icon & Details" icon={SlidersHorizontal}>
           <Toggle label="Show icon" value={cfg.showIcon} onChange={(v) => set("showIcon", v)} />
           <Toggle label="HQ version" value={cfg.isHQ} onChange={(v) => set("isHQ", v)} />
           {cfg.showIcon && <ToggleGroup value={cfg.iconStyle} onChange={(v) => set("iconStyle", v)} options={Object.entries(ICON_STYLES).map(([k, v]) => ({ value: k, label: v.label }))} />}
@@ -949,18 +1013,22 @@ export default function App() {
 
         <div className="action-row">
           <button type="button" onClick={resetAll} className="ghost-btn">
+            <RotateCcw size={13} />
             Reset
           </button>
           <button type="button" onClick={exportPreset} className="ghost-btn">
+            <Save size={13} />
             Export
           </button>
           <button type="button" onClick={() => fileRef.current?.click()} className="ghost-btn">
+            <ImportIcon size={13} />
             Import
           </button>
           <input ref={fileRef} className="hidden-file" type="file" accept="application/json" onChange={importPreset} />
         </div>
 
         <button type="button" onClick={download} disabled={downloading} className="download-btn">
+          <Download size={13} />
           {downloading ? "Saving..." : "Download PNG"}
         </button>
       </aside>
@@ -969,11 +1037,24 @@ export default function App() {
         <div className="workspace-shell">
           <div className="workspace-toolbar">
             <div className="toolbar-group">
-              <span className="toolbar-label">Template</span>
+              <span className="toolbar-label">
+                <ImageIcon size={12} />
+                Asset Type
+              </span>
+              <ToggleGroup value={cfg.assetType} onChange={setAssetType} options={Object.entries(ASSET_TYPES).map(([k, v]) => ({ value: k, label: v.label }))} />
+            </div>
+            <div className="toolbar-group">
+              <span className="toolbar-label">
+                <LayoutTemplate size={12} />
+                Template
+              </span>
               <ToggleGroup value={cfg.template} onChange={setTemplate} options={Object.entries(TEMPLATES).map(([k, v]) => ({ value: k, label: v.label }))} />
             </div>
             <div className="toolbar-group">
-              <span className="toolbar-label">Platform</span>
+              <span className="toolbar-label">
+                <SlidersHorizontal size={12} />
+                Platform
+              </span>
               <ToggleGroup value={cfg.plat} onChange={setPlatform} options={platformOptions} />
             </div>
           </div>
@@ -983,6 +1064,7 @@ export default function App() {
           </div>
 
           <div className="workspace-meta">
+            <span>{ASSET_TYPES[cfg.assetType]?.label || "Asset"}</span>
             <span>Design {designSize.w} x {designSize.h}px</span>
             <span>Export {size.w} x {size.h}px</span>
             <span>{PLATFORMS[cfg.plat].label}</span>
