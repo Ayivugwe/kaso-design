@@ -9,6 +9,45 @@ const PLATFORMS = {
 };
 
 const THEMES = {
+  kasoLight: {
+    label: "Kaso Light",
+    bg: "#EDF5F2",
+    bg2: null,
+    text: "#0D1F1C",
+    sub: "#1A7A6A",
+    muted: "#2E6B61",
+    accent: "#2AA88C",
+    accentDark: "#1A7A6A",
+    tile: "rgba(42,168,140,0.08)",
+    tileS: "#2AA88C",
+    sOp: 0.24,
+  },
+  kasoDark: {
+    label: "Kaso Dark",
+    bg: "#0D1F1C",
+    bg2: null,
+    text: "#EDF5F2",
+    sub: "#6DDCB4",
+    muted: "#A7D7C8",
+    accent: "#4DB896",
+    accentDark: "#2AA88C",
+    tile: "rgba(109,220,180,0.1)",
+    tileS: "#6DDCB4",
+    sOp: 0.3,
+  },
+  kasoGradient: {
+    label: "Kaso Gradient",
+    bg: "#4DB896",
+    bg2: "#1A7A6A",
+    text: "#FFFFFF",
+    sub: "rgba(255,255,255,0.9)",
+    muted: "rgba(255,255,255,0.76)",
+    accent: "#6DDCB4",
+    accentDark: "#2AA88C",
+    tile: "rgba(255,255,255,0.12)",
+    tileS: "rgba(255,255,255,0.35)",
+    sOp: 1,
+  },
   ivory: {
     label: "Ivory",
     bg: "#FBF0E8",
@@ -124,15 +163,15 @@ const FONT_PAIRS = {
 
 const DEFAULT_CFG = {
   plat: "twitter",
-  theme: "ivory",
+  theme: "kasoLight",
   layout: "left",
   fontPair: "classic",
   iconStyle: "tile",
-  title: "Kifuliiru",
-  tagline: "Ndeto Y'Abafuliiru - Language & Culture",
-  description: "",
-  website: "kifuliiru.com",
-  handle: "@kifuliiru",
+  title: "Kaso",
+  tagline: "Flower - Branding & Design Module",
+  description: "Create, customize, and export beautiful visual assets with a simple, elegant interface.",
+  website: "peacae.com",
+  handle: "@kaso_design",
   showIcon: true,
   isHQ: false,
   showDivider: true,
@@ -155,73 +194,51 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-function drawK(ctx, tx, ty, size, isHQ, kColor, hqColor) {
-  const sc = size / 150;
-  const ky = isHQ ? 14 : 18;
-  const kh = isHQ ? 88 : 90;
-  const ny = isHQ ? 45 : 50;
-  const pu = isHQ
-    ? [
-        [42, 58],
-        [88, 14],
-        [112, 14],
-        [112, 34],
-        [66, 58],
-      ]
-    : [
-        [42, 63],
-        [88, 18],
-        [112, 18],
-        [112, 38],
-        [66, 63],
-      ];
-  const pl = isHQ
-    ? [
-        [42, 58],
-        [66, 58],
-        [112, 88],
-        [112, 108],
-        [88, 108],
-      ]
-    : [
-        [42, 63],
-        [66, 63],
-        [112, 92],
-        [112, 112],
-        [88, 112],
-      ];
+function drawFlowerMarkCanvas(ctx, tx, ty, size, isHQ, petalFill, hqColor) {
+  const cx = tx + size / 2;
+  const cy = ty + size / 2;
+  const petalW = size * 0.2;
+  const petalH = size * 0.42;
+  const petalOffset = size * 0.23;
+  const petalsOpacity = [1, 0.85, 0.7, 1, 0.85, 0.7];
 
-  ctx.fillStyle = kColor;
-  roundRect(ctx, tx + 18 * sc, ty + ky * sc, 24 * sc, kh * sc, 5 * sc);
-  ctx.fill();
-  ctx.beginPath();
-  pu.forEach(([x, y], i) =>
-    i ? ctx.lineTo(tx + x * sc, ty + y * sc) : ctx.moveTo(tx + x * sc, ty + y * sc),
-  );
-  ctx.closePath();
-  ctx.fill();
-  ctx.beginPath();
-  pl.forEach(([x, y], i) =>
-    i ? ctx.lineTo(tx + x * sc, ty + y * sc) : ctx.moveTo(tx + x * sc, ty + y * sc),
-  );
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillRect(tx + 42 * sc, ty + ny * sc, 24 * sc, 26 * sc);
-
-  if (isHQ && hqColor) {
+  for (let i = 0; i < 6; i += 1) {
     ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate((i * Math.PI) / 3);
+    ctx.globalAlpha = petalsOpacity[i];
+    ctx.fillStyle = petalFill;
+    roundRect(ctx, -petalW / 2, -petalOffset - petalH / 2, petalW, petalH, petalW * 0.48);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  ctx.save();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = hqColor;
+  ctx.beginPath();
+  ctx.arc(cx, cy, size * 0.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = "white";
+  ctx.beginPath();
+  ctx.arc(cx - size * 0.028, cy - size * 0.028, size * 0.042, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  if (isHQ) {
+    ctx.save();
+    ctx.globalAlpha = 0.55;
     ctx.strokeStyle = hqColor;
-    ctx.lineWidth = 1.5 * sc;
-    ctx.globalAlpha = 0.5;
+    ctx.lineWidth = Math.max(1.5, size * 0.014);
     ctx.beginPath();
-    ctx.moveTo(tx + 116 * sc, ty + 90 * sc);
-    ctx.lineTo(tx + 116 * sc, ty + 110 * sc);
+    ctx.arc(cx, cy, size * 0.45, 0, Math.PI * 2);
     ctx.stroke();
     ctx.globalAlpha = 1;
     ctx.fillStyle = hqColor;
-    ctx.font = `900 ${13 * sc}px Cinzel,serif`;
+    ctx.font = `700 ${Math.max(9, size * 0.085)}px Cinzel,serif`;
     ctx.textAlign = "center";
-    ctx.fillText("HQ", tx + 130 * sc, ty + 105 * sc);
+    ctx.fillText("HQ", tx + size * 0.83, ty + size * 0.9);
     ctx.textAlign = "left";
     ctx.restore();
   }
@@ -286,7 +303,7 @@ function renderToCanvas(cfg) {
   if (showWatermark) {
     ctx.save();
     ctx.globalAlpha = 0.04;
-    drawK(ctx, W * 0.62, H * 0.4, H * 0.85, false, t.text, null);
+    drawFlowerMarkCanvas(ctx, W * 0.62, H * 0.4, H * 0.85, false, t.text, t.text);
     ctx.restore();
   }
 
@@ -326,13 +343,12 @@ function renderToCanvas(cfg) {
       ctx.globalAlpha = 1;
       ctx.restore();
     }
-    const kGrad = ctx.createLinearGradient(ix, iy, ix, iy + iconSz);
-    kGrad.addColorStop(0, t.accent);
-    kGrad.addColorStop(1, t.accentDark);
-    const kColor = themeName === "rust" || themeName === "grad" ? "white" : kGrad;
-    const hqColor =
-      themeName === "rust" || themeName === "grad" ? "rgba(255,255,255,0.88)" : t.accentDark;
-    drawK(ctx, ix, iy, iconSz, isHQ, kColor, hqColor);
+    const logoGradient = ctx.createLinearGradient(ix, iy, ix, iy + iconSz);
+    logoGradient.addColorStop(0, t.accent);
+    logoGradient.addColorStop(1, t.accentDark);
+    const logoFill = themeName === "rust" || themeName === "grad" ? "white" : logoGradient;
+    const hqColor = themeName === "rust" || themeName === "grad" ? "rgba(255,255,255,0.88)" : t.accentDark;
+    drawFlowerMarkCanvas(ctx, ix, iy, iconSz, isHQ, logoFill, hqColor);
     iconEndX = isCentered ? W / 2 : ix + iconSz + W * 0.03;
   }
 
@@ -393,10 +409,11 @@ function renderToCanvas(cfg) {
   if (isSplit && showIcon) {
     const rix = W * 0.62;
     const riy = H / 2 - iconSz * 0.7;
-    const kGrad = ctx.createLinearGradient(rix, riy, rix, riy + iconSz * 1.4);
-    kGrad.addColorStop(0, t.accent);
-    kGrad.addColorStop(1, t.accentDark);
-    const kColor = themeName === "rust" || themeName === "grad" ? "white" : kGrad;
+    const logoGradient = ctx.createLinearGradient(rix, riy, rix, riy + iconSz * 1.4);
+    logoGradient.addColorStop(0, t.accent);
+    logoGradient.addColorStop(1, t.accentDark);
+    const logoFill = themeName === "rust" || themeName === "grad" ? "white" : logoGradient;
+    const hqColor = themeName === "rust" || themeName === "grad" ? "rgba(255,255,255,0.88)" : t.muted;
     if (iconStyle === "tile") {
       ctx.save();
       roundRect(ctx, rix, riy, iconSz * 1.4, iconSz * 1.4, iconSz * 0.187 * 1.4);
@@ -409,7 +426,7 @@ function renderToCanvas(cfg) {
       ctx.globalAlpha = 1;
       ctx.restore();
     }
-    drawK(ctx, rix, riy, iconSz * 1.4, isHQ, kColor, t.muted);
+    drawFlowerMarkCanvas(ctx, rix, riy, iconSz * 1.4, isHQ, logoFill, hqColor);
   }
 
   ctx.textAlign = "left";
@@ -421,11 +438,7 @@ function KSvg({ size, t, isHQ, iconStyle }) {
   const isLight = t.tileS === "rgba(255,255,255,0.3)" || t.tileS === "rgba(255,255,255,0.25)";
   const kColor = isLight ? "white" : `url(#${id})`;
   const hqColor = isLight ? "rgba(255,255,255,0.88)" : t.accentDark;
-  const ptsU = isHQ ? "42,58 88,14 112,14 112,34 66,58" : "42,63 88,18 112,18 112,38 66,63";
-  const ptsL = isHQ ? "42,58 66,58 112,88 112,108 88,108" : "42,63 66,63 112,92 112,112 88,112";
-  const ky = isHQ ? 14 : 18;
-  const kh = isHQ ? 88 : 90;
-  const ny = isHQ ? 45 : 50;
+  const petalsOpacity = [1, 0.85, 0.7, 1, 0.85, 0.7];
 
   return (
     <svg viewBox="0 0 150 150" width={size} height={size} style={{ flexShrink: 0, display: "block" }}>
@@ -447,14 +460,17 @@ function KSvg({ size, t, isHQ, iconStyle }) {
         <circle cx="75" cy="75" r="73" fill={t.tile} stroke={t.tileS} strokeWidth="2" strokeOpacity="0.2" />
       )}
       <g clipPath={iconStyle === "circle" ? `url(#${id}clip)` : undefined}>
-        <rect x="18" y={ky} width="24" height={kh} rx="5" fill={kColor} />
-        <polygon points={ptsU} fill={kColor} />
-        <polygon points={ptsL} fill={kColor} />
-        <rect x="42" y={ny} width="24" height="26" fill={kColor} />
+        {petalsOpacity.map((opacity, i) => (
+          <g key={i} opacity={opacity} transform={`rotate(${i * 60} 75 75)`}>
+            <rect x="60" y="12" width="30" height="63" rx="14" fill={kColor} />
+          </g>
+        ))}
+        <circle cx="75" cy="75" r="14" fill={hqColor} />
+        <circle cx="71" cy="71" r="6" fill="white" fillOpacity="0.35" />
         {isHQ && (
           <>
-            <line x1="116" y1="90" x2="116" y2="110" stroke={hqColor} strokeWidth="1.5" strokeOpacity="0.5" />
-            <text x="130" y="105" fontFamily="Cinzel,serif" fontSize="13" fontWeight="900" fill={hqColor} textAnchor="middle">
+            <circle cx="75" cy="75" r="67" fill="none" stroke={hqColor} strokeWidth="2.2" strokeOpacity="0.55" />
+            <text x="126" y="136" fontFamily="Cinzel,serif" fontSize="12" fontWeight="700" fill={hqColor} textAnchor="middle">
               HQ
             </text>
           </>
@@ -676,8 +692,11 @@ export default function App() {
     <div className="app-root">
       <aside className="sidebar">
         <div className="brand">
+          <div className="brand-mark">
+            <KSvg size={54} t={THEMES.kasoGradient} isHQ={false} iconStyle="naked" />
+          </div>
           <div className="brand-title">Kaso</div>
-          <div className="brand-subtitle">Design Studio</div>
+          <div className="brand-subtitle">Flower - Branding & Design Module</div>
         </div>
 
         <Section title="Platform">
