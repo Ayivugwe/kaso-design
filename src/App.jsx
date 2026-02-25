@@ -522,7 +522,13 @@ function drawDesignMonogram(ctx, tx, ty, size, isHQ, kColor, hqColor) {
 }
 
 function wrapText(ctx, text, x, y, maxW, lineH) {
-  const words = text.split(" ");
+  const lines = getWrappedLines(ctx, text, maxW);
+  lines.forEach((l, i) => ctx.fillText(l, x, y + i * lineH));
+  return lines.length * lineH;
+}
+
+function getWrappedLines(ctx, text, maxW) {
+  const words = String(text || "").split(" ");
   let line = "";
   const lines = [];
   for (const w of words) {
@@ -534,9 +540,8 @@ function wrapText(ctx, text, x, y, maxW, lineH) {
       line = test;
     }
   }
-  lines.push(line);
-  lines.forEach((l, i) => ctx.fillText(l, x, y + i * lineH));
-  return lines.length * lineH;
+  lines.push(line || "");
+  return lines;
 }
 
 function getTemplateMetrics(template) {
@@ -627,7 +632,58 @@ function renderCardCanvas(cfg, W, H, templateKey) {
   const contentW = isSplit ? W * 0.52 : W * 0.84;
   const iconSz = Math.min(H * 0.38, W * 0.12);
   const startX = isCentered ? W / 2 : padX;
-  const typeSizes = getTypographySizes(H, W, metrics, false);
+  const baseSizes = getTypographySizes(H, W, metrics, false);
+
+  const estimateHeight = (sizes) => {
+    let total = 0;
+
+    ctx.font = `900 ${sizes.title}px ${fp.title}`;
+    total += getWrappedLines(ctx, title, contentW).length * sizes.title * 1.2;
+    total += sizes.title * 0.3;
+
+    if (showDivider) {
+      const dh = Math.max(2, H * 0.006);
+      total += dh + sizes.title * 0.5;
+    }
+
+    if (tagline) {
+      ctx.font = `italic ${sizes.tag}px ${fp.body}`;
+      total += getWrappedLines(ctx, tagline, contentW).length * sizes.tag * 1.5;
+      total += sizes.tag * 0.5;
+    }
+
+    if (description) {
+      ctx.font = `${sizes.desc}px ${fp.body}`;
+      total += getWrappedLines(ctx, description, contentW).length * sizes.desc * 1.6;
+      total += sizes.desc * 0.5;
+    }
+
+    const metaItems = [website, handle].filter(Boolean);
+    if (metaItems.length) {
+      total += sizes.meta * 0.4;
+      total += metaItems.length * sizes.meta * 1.8;
+    }
+
+    return total;
+  };
+
+  let fitScale = 1;
+  let typeSizes = baseSizes;
+  const startY = isCentered ? (showIcon ? padY + iconSz + H * 0.06 : H * 0.25) : H / 2 - H * 0.22;
+  const maxY = H * 0.93;
+  for (let i = 0; i < 12; i += 1) {
+    const estimated = estimateHeight(typeSizes);
+    if (startY + estimated <= maxY || fitScale <= 0.72) {
+      break;
+    }
+    fitScale *= 0.94;
+    typeSizes = {
+      title: baseSizes.title * fitScale,
+      tag: baseSizes.tag * fitScale,
+      desc: baseSizes.desc * fitScale,
+      meta: baseSizes.meta * fitScale,
+    };
+  }
 
   let iconEndX = padX;
   if (showIcon) {
@@ -669,7 +725,7 @@ function renderCardCanvas(cfg, W, H, templateKey) {
 
   const tx = isCentered ? startX : showIcon && !isCentered ? iconEndX : padX;
   ctx.textAlign = isCentered ? "center" : "left";
-  let curY = isCentered ? (showIcon ? padY + iconSz + H * 0.06 : H * 0.25) : H / 2 - H * 0.22;
+  let curY = startY;
 
   const titleSz = typeSizes.title;
   ctx.font = `900 ${titleSz}px ${fp.title}`;
