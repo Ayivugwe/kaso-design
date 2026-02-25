@@ -6,6 +6,8 @@ import {
   Import as ImportIcon,
   LayoutTemplate,
   Palette,
+  PanelLeftClose,
+  PanelLeftOpen,
   RotateCcw,
   Save,
   SlidersHorizontal,
@@ -185,6 +187,138 @@ const THEMES = {
     tile: "#DCC39B",
     tileS: "#BF3F0F",
     sOp: 0.2,
+  },
+  sky: {
+    label: "Sky",
+    bg: "#EAF4FF",
+    bg2: "#C9E2FF",
+    text: "#10233F",
+    sub: "#1E4C8F",
+    muted: "#3B679D",
+    accent: "#2F80ED",
+    accentDark: "#1F5FB8",
+    tile: "#DCEBFC",
+    tileS: "#2F80ED",
+    sOp: 0.22,
+  },
+  forest: {
+    label: "Forest",
+    bg: "#0F2E1F",
+    bg2: "#1D5A3A",
+    text: "#ECF8F1",
+    sub: "#9FD9B5",
+    muted: "#7FB592",
+    accent: "#4DBB7A",
+    accentDark: "#2D8A56",
+    tile: "#163D2A",
+    tileS: "#4DBB7A",
+    sOp: 0.28,
+  },
+  royal: {
+    label: "Royal",
+    bg: "#1E1B4B",
+    bg2: "#312E81",
+    text: "#F5F3FF",
+    sub: "#C4B5FD",
+    muted: "#A78BFA",
+    accent: "#8B5CF6",
+    accentDark: "#6D28D9",
+    tile: "#28235C",
+    tileS: "#8B5CF6",
+    sOp: 0.32,
+  },
+  cherry: {
+    label: "Cherry",
+    bg: "#FFF1F2",
+    bg2: "#FFE4E6",
+    text: "#3F0D16",
+    sub: "#9F1239",
+    muted: "#BE123C",
+    accent: "#E11D48",
+    accentDark: "#9F1239",
+    tile: "#FFD7DE",
+    tileS: "#E11D48",
+    sOp: 0.22,
+  },
+  mono: {
+    label: "Mono",
+    bg: "#F5F5F5",
+    bg2: null,
+    text: "#111111",
+    sub: "#333333",
+    muted: "#555555",
+    accent: "#111111",
+    accentDark: "#000000",
+    tile: "#E4E4E4",
+    tileS: "#111111",
+    sOp: 0.2,
+  },
+};
+
+const QUICK_TEMPLATES = {
+  launch: {
+    label: "Product Launch",
+    cfg: {
+      title: "Kaso Studio",
+      tagline: "Launch Day - New Creative Toolkit",
+      description: "Design once, publish everywhere with professional brand consistency.",
+      website: "peacae.com",
+      handle: "@kaso_design",
+      layout: "split",
+      theme: "kasoGradient",
+      fontPair: "readable",
+      iconStyle: "tile",
+      showDivider: true,
+      showIcon: true,
+    },
+  },
+  webinar: {
+    label: "Event Promo",
+    cfg: {
+      title: "Live Design Session",
+      tagline: "Thursday at 7:00 PM",
+      description: "Learn visual storytelling and platform-ready workflows in one practical session.",
+      website: "peacae.com/events",
+      handle: "@kaso_design",
+      layout: "left",
+      theme: "royal",
+      fontPair: "modern",
+      iconStyle: "circle",
+      showDivider: true,
+      showIcon: true,
+    },
+  },
+  quote: {
+    label: "Quote Card",
+    cfg: {
+      title: "Design is direction.",
+      tagline: "Not decoration.",
+      description: "",
+      website: "",
+      handle: "@kaso_design",
+      layout: "center",
+      theme: "mono",
+      fontPair: "editorial",
+      iconStyle: "naked",
+      showDivider: false,
+      showIcon: false,
+    },
+  },
+  update: {
+    label: "Feature Update",
+    cfg: {
+      title: "New in Kaso",
+      tagline: "Templates, Themes, and Better Exports",
+      description: "Create faster with reusable structures and stronger visual quality controls.",
+      website: "peacae.com",
+      handle: "@kaso_design",
+      layout: "left",
+      theme: "sky",
+      fontPair: "compact",
+      iconStyle: "tile",
+      showDivider: true,
+      showIcon: true,
+    },
   },
 };
 
@@ -459,15 +593,11 @@ function getTypographySizes(H, W, metrics, previewMode = false) {
   };
 }
 
-function renderToCanvas(cfg) {
-  const { plat, title, tagline, description, website, handle, showIcon, isHQ, iconStyle, layout, fontPair, showDivider, showWatermark } = cfg;
-  const sz = PLATFORMS[plat];
+function renderCardCanvas(cfg, W, H, templateKey) {
+  const { title, tagline, description, website, handle, showIcon, isHQ, iconStyle, layout, fontPair, showDivider, showWatermark } = cfg;
   const t = resolveTheme(cfg);
   const fp = FONT_PAIRS[fontPair];
-  const metrics = getTemplateMetrics(PLATFORMS[plat].template);
-  const W = sz.w;
-  const H = sz.h;
-
+  const metrics = getTemplateMetrics(templateKey);
   const c = document.createElement("canvas");
   c.width = W;
   c.height = H;
@@ -614,51 +744,43 @@ function renderToCanvas(cfg) {
     drawDesignMonogram(ctx, rix, riy, iconSz * 1.4, isHQ, kColor, hqColor);
   }
 
-  return c.toDataURL("image/png");
+  return c;
 }
 
-function DesignLogoSvg({ size, t, isHQ, iconStyle }) {
-  const id = useRef(`k${Math.random().toString(36).slice(2, 7)}`).current;
-  const light = t.tileS.includes("255");
-  const kColor = light ? "white" : `url(#${id})`;
-  const hqColor = light ? "rgba(255,255,255,0.88)" : t.accentDark;
-  const ptsU = isHQ ? "42,58 88,14 112,14 112,34 66,58" : "42,63 88,18 112,18 112,38 66,63";
-  const ptsL = isHQ ? "42,58 66,58 112,88 112,108 88,108" : "42,63 66,63 112,92 112,112 88,112";
-  const ky = isHQ ? 14 : 18;
-  const kh = isHQ ? 88 : 90;
-  const ny = isHQ ? 45 : 50;
+function getCropRect(sw, sh, targetW, targetH) {
+  const sourceAspect = sw / sh;
+  const targetAspect = targetW / targetH;
+  if (Math.abs(sourceAspect - targetAspect) < 0.0001) {
+    return { sx: 0, sy: 0, cw: sw, ch: sh };
+  }
+  if (targetAspect > sourceAspect) {
+    const ch = sw / targetAspect;
+    return { sx: 0, sy: (sh - ch) / 2, cw: sw, ch };
+  }
+  const cw = sh * targetAspect;
+  return { sx: (sw - cw) / 2, sy: 0, cw, ch: sh };
+}
 
-  return (
-    <svg viewBox="0 0 150 150" width={size} height={size} style={{ flexShrink: 0, display: "block" }}>
-      <defs>
-        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={t.accent} />
-          <stop offset="100%" stopColor={t.accentDark} />
-        </linearGradient>
-        {iconStyle === "circle" && (
-          <clipPath id={`${id}clip`}>
-            <circle cx="75" cy="75" r="73" />
-          </clipPath>
-        )}
-      </defs>
-      {iconStyle === "tile" && <rect x="4" y="4" width="142" height="142" rx="28" fill={t.tile} stroke={t.tileS} strokeWidth="2" strokeOpacity={t.sOp} />}
-      {iconStyle === "circle" && <circle cx="75" cy="75" r="73" fill={t.tile} stroke={t.tileS} strokeWidth="2" strokeOpacity={t.sOp} />}
-      <g clipPath={iconStyle === "circle" ? `url(#${id}clip)` : undefined}>
-        <rect x="18" y={ky} width="24" height={kh} rx="5" fill={kColor} />
-        <polygon points={ptsU} fill={kColor} />
-        <polygon points={ptsL} fill={kColor} />
-        <rect x="42" y={ny} width="24" height="26" fill={kColor} />
-        {isHQ && (
-          <>
-            <line x1="116" y1="90" x2="116" y2="110" stroke={hqColor} strokeWidth="1.5" strokeOpacity="0.5" />
-            <text x="130" y="105" fontFamily="Cinzel,serif" fontSize="13" fontWeight="900" fill={hqColor} textAnchor="middle">
-              HQ
-            </text>
-          </>
-        )}
-      </g>
-    </svg>
-  );
+function renderToCanvas(cfg) {
+  const target = PLATFORMS[cfg.plat];
+  const designSurface = DESIGN_SURFACES[cfg.template] || DESIGN_SURFACES.horizontal;
+  const baseCrop = getCropRect(designSurface.w, designSurface.h, target.w, target.h);
+  const scale = Math.max(target.w / baseCrop.cw, target.h / baseCrop.ch, 1);
+  const baseW = Math.round(designSurface.w * scale);
+  const baseH = Math.round(designSurface.h * scale);
+  const source = renderCardCanvas(cfg, baseW, baseH, cfg.template);
+  const crop = getCropRect(baseW, baseH, target.w, target.h);
+  const out = document.createElement("canvas");
+  out.width = target.w;
+  out.height = target.h;
+  const ctx = out.getContext("2d");
+  ctx.drawImage(source, crop.sx, crop.sy, crop.cw, crop.ch, 0, 0, target.w, target.h);
+  return out.toDataURL("image/png");
+}
+
+function renderPreviewCanvas(cfg) {
+  const designSurface = DESIGN_SURFACES[cfg.template] || DESIGN_SURFACES.horizontal;
+  return renderCardCanvas(cfg, designSurface.w, designSurface.h, cfg.template);
 }
 
 function AppFlowerLogo({ size = 48 }) {
@@ -683,25 +805,16 @@ function AppFlowerLogo({ size = 48 }) {
 }
 
 function PreviewCard({ cfg }) {
-  const { plat, title, tagline, description, website, handle, showIcon, isHQ, iconStyle, layout, fontPair, showDivider, showWatermark } = cfg;
+  const { plat } = cfg;
   const target = PLATFORMS[plat];
   const designSurface = DESIGN_SURFACES[cfg.template] || DESIGN_SURFACES.horizontal;
   const sz = designSurface;
-  const t = resolveTheme(cfg);
-  const fp = FONT_PAIRS[fontPair];
   const template = cfg.template;
-  const metrics = getTemplateMetrics(template);
   const maxBox = template === "vertical" ? { w: 420, h: 760 } : template === "square" ? { w: 640, h: 640 } : { w: 980, h: 430 };
   const scale = Math.min(maxBox.w / sz.w, maxBox.h / sz.h, 1);
   const dw = sz.w * scale;
   const dh = sz.h * scale;
-  const isCentered = layout === "center";
-  const isSplit = layout === "split";
-  const iconSz = Math.min(dh * 0.36, dw * 0.12);
-  const padX = dw * metrics.padX;
-  const padY = dh * metrics.padY;
-  const typeSizes = getTypographySizes(dh, dw, metrics, true);
-  const bgStyle = t.bg2 ? { background: `linear-gradient(145deg,${t.bg},${t.bg2})` } : { background: t.bg };
+  const previewUrl = useMemo(() => renderPreviewCanvas(cfg).toDataURL("image/png"), [cfg]);
   const targetAspect = target.w / target.h;
   const previewAspect = sz.w / sz.h;
   const showSafeGuide = Math.abs(targetAspect - previewAspect) > 0.01;
@@ -718,7 +831,12 @@ function PreviewCard({ cfg }) {
   })();
 
   return (
-    <div style={{ ...bgStyle, width: dw, height: dh, borderRadius: 14, position: "relative", overflow: "hidden", boxShadow: "0 24px 90px rgba(0,0,0,0.45)", flexShrink: 0 }}>
+    <div style={{ width: dw, height: dh, borderRadius: 14, position: "relative", overflow: "hidden", boxShadow: "0 24px 90px rgba(0,0,0,0.45)", flexShrink: 0 }}>
+      <img
+        src={previewUrl}
+        alt="Design preview"
+        style={{ width: "100%", height: "100%", display: "block" }}
+      />
       <div
         style={{
           position: "absolute",
@@ -770,41 +888,6 @@ function PreviewCard({ cfg }) {
           </div>
         </>
       )}
-      {showWatermark && (
-        <div style={{ position: "absolute", bottom: 0, right: 0, width: "38%", height: "80%", opacity: 0.04, pointerEvents: "none" }}>
-          <DesignLogoSvg size="100%" t={t} isHQ={false} iconStyle="naked" />
-        </div>
-      )}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          flexDirection: isCentered ? "column" : "row",
-          alignItems: "center",
-          justifyContent: isSplit ? "space-between" : isCentered ? "center" : "flex-start",
-          padding: `${padY}px ${padX}px`,
-          gap: dw * 0.03,
-          textAlign: isCentered ? "center" : "left",
-        }}
-      >
-        {showIcon && !isSplit && <DesignLogoSvg size={iconSz} t={t} isHQ={isHQ} iconStyle={iconStyle} />}
-        <div style={{ display: "flex", flexDirection: "column", gap: dh * 0.028, maxWidth: isSplit ? "52%" : "100%", alignItems: isCentered ? "center" : "flex-start" }}>
-          {title && <div style={{ fontFamily: fp.title, fontWeight: 800, fontSize: typeSizes.title, color: t.text, letterSpacing: -0.2, lineHeight: 1.08 }}>{title}</div>}
-          {showDivider && <div style={{ width: Math.min(48, dw * 0.05), height: Math.max(2, dh * 0.006), background: t.accent, borderRadius: 2 }} />}
-          {tagline && <div style={{ fontFamily: fp.body, fontStyle: "italic", fontSize: typeSizes.tag, color: t.sub, lineHeight: 1.4 }}>{tagline}</div>}
-          {description && <div style={{ fontFamily: fp.body, fontSize: typeSizes.desc, color: t.muted, lineHeight: 1.5, maxWidth: "94%" }}>{description}</div>}
-          <div style={{ display: "flex", flexDirection: "column", gap: dh * 0.02, marginTop: dh * 0.01 }}>
-            {[website, handle].filter(Boolean).map((m, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: dw * 0.008, fontFamily: fp.tag, fontSize: typeSizes.meta, letterSpacing: "0.03em", color: t.muted }}>
-                <span style={{ width: dh * 0.016, height: dh * 0.016, borderRadius: "50%", background: t.accent, flexShrink: 0 }} />
-                {m}
-              </div>
-            ))}
-          </div>
-        </div>
-        {showIcon && isSplit && <DesignLogoSvg size={iconSz * 1.4} t={t} isHQ={isHQ} iconStyle={iconStyle} />}
-      </div>
     </div>
   );
 }
@@ -864,6 +947,7 @@ export default function App() {
       return DEFAULT_CFG;
     }
   });
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [message, setMessage] = useState("");
   const fileRef = useRef(null);
@@ -982,6 +1066,13 @@ export default function App() {
     });
   }, []);
 
+  const applyQuickTemplate = useCallback((templateKey) => {
+    const preset = QUICK_TEMPLATES[templateKey];
+    if (!preset) return;
+    setCfg((p) => normalizeCfg({ ...p, ...preset.cfg }));
+    setMessage(`Template applied: ${preset.label}`);
+  }, []);
+
   const download = useCallback(() => {
     setDownloading(true);
     setTimeout(() => {
@@ -1033,28 +1124,45 @@ export default function App() {
   const designSize = DESIGN_SURFACES[cfg.template] || DESIGN_SURFACES.horizontal;
 
   return (
-    <div className="app-root" style={uiVars}>
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="brand-mark">
-            <AppFlowerLogo size={54} />
-          </div>
-          <div className="brand-title">Kaso</div>
-          <div className="brand-subtitle">Flower - Branding & Design Module</div>
-          <div className="theme-picker-inline">
-            <Palette size={13} />
-            <label htmlFor="themeSelect">App Theme</label>
-            <select id="themeSelect" value={cfg.appTheme} onChange={(e) => setAppThemeKey(e.target.value)}>
-              {Object.entries(APP_THEMES).map(([k, v]) => (
-                <option key={k} value={k}>
-                  {v.label}
-                </option>
-              ))}
-            </select>
-          </div>
+    <div className={`app-root ${sidebarCollapsed ? "app-root-sidebar-collapsed" : ""}`} style={uiVars}>
+      <aside className={`sidebar ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
+        <div className="sidebar-toggle-row">
+          <button
+            type="button"
+            className="sidebar-toggle-btn"
+            onClick={() => setSidebarCollapsed((v) => !v)}
+            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {sidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+          </button>
         </div>
 
-        <Section title="Content" icon={Type} defaultOpen>
+        {sidebarCollapsed ? (
+          <div className="collapsed-brand">
+            <AppFlowerLogo size={38} />
+          </div>
+        ) : (
+          <>
+            <div className="brand">
+              <div className="brand-mark">
+                <AppFlowerLogo size={54} />
+              </div>
+              <div className="brand-title">Kaso</div>
+              <div className="brand-subtitle">Flower - Branding & Design Module</div>
+              <div className="theme-picker-inline">
+                <Palette size={13} />
+                <label htmlFor="themeSelect">App Theme</label>
+                <select id="themeSelect" value={cfg.appTheme} onChange={(e) => setAppThemeKey(e.target.value)}>
+                  {Object.entries(APP_THEMES).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <Section title="Content" icon={Type} defaultOpen>
           <Field label="Brand Name">
             <input value={cfg.title} onChange={(e) => set("title", e.target.value)} className="input" />
           </Field>
@@ -1070,9 +1178,9 @@ export default function App() {
           <Field label="Handle">
             <input value={cfg.handle} onChange={(e) => set("handle", e.target.value)} className="input" />
           </Field>
-        </Section>
+            </Section>
 
-        <Section title="Look & Feel" icon={Palette}>
+            <Section title="Look & Feel" icon={Palette}>
           <Field label="Design Theme">
             <ToggleGroup value={cfg.theme} onChange={(v) => set("theme", v)} options={Object.entries(THEMES).map(([k, v]) => ({ value: k, label: v.label }))} />
           </Field>
@@ -1110,36 +1218,53 @@ export default function App() {
           <Field label="Typography">
             <ToggleGroup value={cfg.fontPair} onChange={(v) => set("fontPair", v)} options={Object.entries(FONT_PAIRS).map(([k, v]) => ({ value: k, label: v.label }))} />
           </Field>
-        </Section>
+            </Section>
 
-        <Section title="Icon & Details" icon={SlidersHorizontal}>
+            <Section title="Quick Templates" icon={LayoutTemplate}>
+              <div className="quick-template-grid">
+                {Object.entries(QUICK_TEMPLATES).map(([key, item]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className="quick-template-btn"
+                    onClick={() => applyQuickTemplate(key)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </Section>
+
+            <Section title="Icon & Details" icon={SlidersHorizontal}>
           <Toggle label="Show icon" value={cfg.showIcon} onChange={(v) => set("showIcon", v)} />
           <Toggle label="HQ version" value={cfg.isHQ} onChange={(v) => set("isHQ", v)} />
           {cfg.showIcon && <ToggleGroup value={cfg.iconStyle} onChange={(v) => set("iconStyle", v)} options={Object.entries(ICON_STYLES).map(([k, v]) => ({ value: k, label: v.label }))} />}
           <Toggle label="Divider line" value={cfg.showDivider} onChange={(v) => set("showDivider", v)} />
           <Toggle label="Watermark" value={cfg.showWatermark} onChange={(v) => set("showWatermark", v)} />
-        </Section>
+            </Section>
 
-        <div className="action-row">
-          <button type="button" onClick={resetAll} className="ghost-btn">
-            <RotateCcw size={13} />
-            Reset
-          </button>
-          <button type="button" onClick={exportPreset} className="ghost-btn">
-            <Save size={13} />
-            Export
-          </button>
-          <button type="button" onClick={() => fileRef.current?.click()} className="ghost-btn">
-            <ImportIcon size={13} />
-            Import
-          </button>
-          <input ref={fileRef} className="hidden-file" type="file" accept="application/json" onChange={importPreset} />
-        </div>
+            <div className="action-row">
+              <button type="button" onClick={resetAll} className="ghost-btn">
+                <RotateCcw size={13} />
+                Reset
+              </button>
+              <button type="button" onClick={exportPreset} className="ghost-btn">
+                <Save size={13} />
+                Export
+              </button>
+              <button type="button" onClick={() => fileRef.current?.click()} className="ghost-btn">
+                <ImportIcon size={13} />
+                Import
+              </button>
+              <input ref={fileRef} className="hidden-file" type="file" accept="application/json" onChange={importPreset} />
+            </div>
 
-        <button type="button" onClick={download} disabled={downloading} className="download-btn">
-          <Download size={13} />
-          {downloading ? "Saving..." : "Download PNG"}
-        </button>
+            <button type="button" onClick={download} disabled={downloading} className="download-btn">
+              <Download size={13} />
+              {downloading ? "Saving..." : "Download PNG"}
+            </button>
+          </>
+        )}
       </aside>
 
       <main className="workspace">
