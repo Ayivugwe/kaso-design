@@ -7,11 +7,13 @@ const TEMPLATES = {
 };
 
 const PLATFORMS = {
-  twitter: { label: "Twitter / X", w: 1500, h: 500, template: "horizontal" },
-  linkedin: { label: "LinkedIn", w: 1584, h: 396, template: "horizontal" },
-  facebook: { label: "Facebook", w: 820, h: 312, template: "horizontal" },
-  og: { label: "OG / Blog", w: 1200, h: 630, template: "horizontal" },
-  instagram: { label: "Instagram", w: 1080, h: 1080, template: "square" },
+  twitter: { label: "Twitter / X Header", w: 1500, h: 500, template: "horizontal" },
+  linkedin: { label: "LinkedIn Cover", w: 1584, h: 396, template: "horizontal" },
+  facebook: { label: "Facebook Page Cover", w: 851, h: 315, template: "horizontal" },
+  og: { label: "OG / Link Share", w: 1200, h: 630, template: "horizontal" },
+  universalLink: { label: "Universal Link (All Social)", w: 1200, h: 630, template: "horizontal" },
+  instagram: { label: "Instagram Square Post", w: 1080, h: 1080, template: "square" },
+  universalSquare: { label: "Universal Square (All Social)", w: 1080, h: 1080, template: "square" },
   portrait: { label: "Portrait", w: 1080, h: 1350, template: "vertical" },
   story: { label: "Story", w: 1080, h: 1920, template: "vertical" },
 };
