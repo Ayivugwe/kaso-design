@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ChevronDown,
   Download,
   Image as ImageIcon,
   Import as ImportIcon,
@@ -707,14 +708,18 @@ function PreviewCard({ cfg }) {
   );
 }
 
-function Section({ title, icon: Icon, children }) {
+function Section({ title, icon: Icon, defaultOpen = false, children }) {
+  const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="section">
-      <div className="section-title">
-        {Icon ? <Icon size={13} /> : null}
-        <span>{title}</span>
-      </div>
-      {children}
+    <div className={`section ${open ? "section-open" : ""}`}>
+      <button type="button" className="section-title" onClick={() => setOpen((v) => !v)}>
+        <span className="section-title-left">
+          {Icon ? <Icon size={13} /> : null}
+          <span>{title}</span>
+        </span>
+        <ChevronDown size={14} className={`section-chevron ${open ? "section-chevron-open" : ""}`} />
+      </button>
+      {open ? <div className="section-body">{children}</div> : null}
     </div>
   );
 }
@@ -945,7 +950,7 @@ export default function App() {
           </div>
         </div>
 
-        <Section title="Content" icon={Type}>
+        <Section title="Content" icon={Type} defaultOpen>
           <Field label="Brand Name">
             <input value={cfg.title} onChange={(e) => set("title", e.target.value)} className="input" />
           </Field>

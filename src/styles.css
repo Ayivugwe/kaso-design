@@ -35,7 +35,7 @@ body {
   backdrop-filter: blur(14px);
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 18px 16px 16px;
+  padding: 14px 12px 12px;
   display: flex;
   flex-direction: column;
   scrollbar-width: none;
@@ -66,8 +66,8 @@ body {
 }
 
 .brand {
-  margin-bottom: 18px;
-  padding-bottom: 12px;
+  margin-bottom: 12px;
+  padding: 0 4px 10px;
   border-bottom: 1px solid var(--ui-border-soft);
 }
 
@@ -119,8 +119,8 @@ body {
 }
 
 .section {
-  margin-bottom: 16px;
-  padding: 12px;
+  margin-bottom: 10px;
+  padding: 8px;
   border: 1px solid var(--ui-border-soft);
   border-radius: 12px;
   background: var(--ui-panel-soft);
@@ -129,17 +129,43 @@ body {
 .section-title {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 2px 2px 4px;
+  text-align: left;
+  cursor: pointer;
   font-size: 11px;
   letter-spacing: 0.03em;
   font-weight: 700;
   color: var(--ui-subtext);
   text-transform: none;
-  margin-bottom: 10px;
+  margin-bottom: 0;
+}
+
+.section-title-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.section-chevron {
+  opacity: 0.75;
+  transition: transform 0.2s ease;
+}
+
+.section-chevron-open {
+  transform: rotate(180deg);
+}
+
+.section-body {
+  padding-top: 8px;
 }
 
 .field {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .field:last-child {
@@ -148,7 +174,7 @@ body {
 
 .field-label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
   font-size: 11px;
   letter-spacing: 0.02em;
   font-weight: 600;
@@ -158,7 +184,7 @@ body {
 
 .input {
   width: 100%;
-  padding: 9px 11px;
+  padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid var(--ui-border-soft);
   background: var(--ui-input-bg);
@@ -179,7 +205,7 @@ body {
 .toggle-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 5px;
 }
 
 .chip {
@@ -187,9 +213,9 @@ body {
   background: var(--ui-chip-bg);
   color: var(--ui-subtext);
   border-radius: 999px;
-  padding: 6px 11px;
+  padding: 5px 10px;
   font-family: Inter, system-ui, sans-serif;
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.01em;
   text-transform: none;
   cursor: pointer;
@@ -205,7 +231,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .toggle-label {
@@ -218,8 +244,8 @@ body {
 .color-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin: 8px 0 10px;
+  gap: 6px;
+  margin: 6px 0 8px;
 }
 
 .color-field {
@@ -286,7 +312,7 @@ body {
 
 .action-row {
   margin-top: auto;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   display: grid;
   gap: 8px;
   grid-template-columns: repeat(3, 1fr);
@@ -297,8 +323,8 @@ body {
   background: var(--ui-chip-bg);
   color: var(--ui-text);
   border-radius: 8px;
-  padding: 9px 0;
-  font-size: 11px;
+  padding: 8px 0;
+  font-size: 10px;
   letter-spacing: 0.01em;
   text-transform: none;
   font-family: Inter, system-ui, sans-serif;
@@ -312,8 +338,8 @@ body {
 .download-btn {
   border: 0;
   border-radius: 10px;
-  padding: 12px 0;
-  font-size: 11px;
+  padding: 10px 0;
+  font-size: 10px;
   letter-spacing: 0.03em;
   text-transform: none;
   color: white;
