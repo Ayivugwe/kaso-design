@@ -18,6 +18,12 @@ const PLATFORMS = {
   story: { label: "Story", w: 1080, h: 1920, template: "vertical" },
 };
 
+const DESIGN_SURFACES = {
+  horizontal: { w: 1200, h: 630 },
+  square: { w: 1080, h: 1080 },
+  vertical: { w: 1080, h: 1350 },
+};
+
 const THEMES = {
   kasoLight: {
     label: "Kaso Light",
@@ -548,10 +554,12 @@ function AppFlowerLogo({ size = 48 }) {
 
 function PreviewCard({ cfg }) {
   const { plat, theme: themeName, title, tagline, description, website, handle, showIcon, isHQ, iconStyle, layout, fontPair, showDivider, showWatermark } = cfg;
-  const sz = PLATFORMS[plat];
+  const target = PLATFORMS[plat];
+  const designSurface = DESIGN_SURFACES[cfg.template] || DESIGN_SURFACES.horizontal;
+  const sz = designSurface;
   const t = resolveTheme(cfg);
   const fp = FONT_PAIRS[fontPair];
-  const template = PLATFORMS[plat].template;
+  const template = cfg.template;
   const maxBox = template === "vertical" ? { w: 420, h: 760 } : template === "square" ? { w: 640, h: 640 } : { w: 980, h: 430 };
   const scale = Math.min(maxBox.w / sz.w, maxBox.h / sz.h, 1);
   const dw = sz.w * scale;
@@ -562,9 +570,64 @@ function PreviewCard({ cfg }) {
   const padX = dw * 0.08;
   const padY = dh * 0.11;
   const bgStyle = t.bg2 ? { background: `linear-gradient(145deg,${t.bg},${t.bg2})` } : { background: t.bg };
+  const targetAspect = target.w / target.h;
+  const previewAspect = sz.w / sz.h;
+  const showSafeGuide = Math.abs(targetAspect - previewAspect) > 0.01;
+  const safeGuide = (() => {
+    if (!showSafeGuide) {
+      return null;
+    }
+    if (targetAspect > previewAspect) {
+      const h = dw / targetAspect;
+      return { x: 0, y: (dh - h) / 2, w: dw, h };
+    }
+    const w = dh * targetAspect;
+    return { x: (dw - w) / 2, y: 0, w, h: dh };
+  })();
 
   return (
     <div style={{ ...bgStyle, width: dw, height: dh, borderRadius: 14, position: "relative", overflow: "hidden", boxShadow: "0 24px 90px rgba(0,0,0,0.45)", flexShrink: 0 }}>
+      {safeGuide && (
+        <>
+          <div style={{ position: "absolute", left: 0, top: 0, width: "100%", height: safeGuide.y, background: "rgba(0,0,0,0.18)", pointerEvents: "none", zIndex: 2 }} />
+          <div style={{ position: "absolute", left: 0, top: safeGuide.y + safeGuide.h, width: "100%", height: dh - (safeGuide.y + safeGuide.h), background: "rgba(0,0,0,0.18)", pointerEvents: "none", zIndex: 2 }} />
+          <div style={{ position: "absolute", left: 0, top: safeGuide.y, width: safeGuide.x, height: safeGuide.h, background: "rgba(0,0,0,0.18)", pointerEvents: "none", zIndex: 2 }} />
+          <div style={{ position: "absolute", left: safeGuide.x + safeGuide.w, top: safeGuide.y, width: dw - (safeGuide.x + safeGuide.w), height: safeGuide.h, background: "rgba(0,0,0,0.18)", pointerEvents: "none", zIndex: 2 }} />
+          <div
+            style={{
+              position: "absolute",
+              left: safeGuide.x,
+              top: safeGuide.y,
+              width: safeGuide.w,
+              height: safeGuide.h,
+              border: "1px dashed rgba(255,255,255,0.65)",
+              borderRadius: 8,
+              pointerEvents: "none",
+              zIndex: 3,
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              right: 10,
+              top: 10,
+              zIndex: 4,
+              fontFamily: "Cinzel,serif",
+              fontSize: 10,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.9)",
+              background: "rgba(0,0,0,0.34)",
+              border: "1px solid rgba(255,255,255,0.25)",
+              borderRadius: 999,
+              padding: "4px 8px",
+              pointerEvents: "none",
+            }}
+          >
+            Export Crop
+          </div>
+        </>
+      )}
       {showWatermark && (
         <div style={{ position: "absolute", bottom: 0, right: 0, width: "38%", height: "80%", opacity: 0.04, pointerEvents: "none" }}>
           <DesignLogoSvg size="100%" t={t} isHQ={false} iconStyle="naked" />
@@ -795,6 +858,7 @@ export default function App() {
   }, []);
 
   const size = PLATFORMS[cfg.plat];
+  const designSize = DESIGN_SURFACES[cfg.template] || DESIGN_SURFACES.horizontal;
 
   return (
     <div className="app-root" style={uiVars}>
@@ -919,8 +983,9 @@ export default function App() {
           </div>
 
           <div className="workspace-meta">
+            <span>Design {designSize.w} x {designSize.h}px</span>
+            <span>Export {size.w} x {size.h}px</span>
             <span>{PLATFORMS[cfg.plat].label}</span>
-            <span>{size.w} x {size.h}px</span>
             <span>{themeNow.label}</span>
             <span>{LAYOUTS[cfg.layout].label}</span>
           </div>
