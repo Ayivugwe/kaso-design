@@ -47,6 +47,27 @@ const DESIGN_SURFACES = {
   vertical: { w: 1080, h: 1350 },
 };
 
+const APP_THEMES = {
+  light: {
+    label: "Light",
+    bg: "#F8FAFC",
+    bg2: "#EEF2F7",
+    text: "#0F172A",
+    sub: "#475569",
+    accent: "#2563EB",
+    accentDark: "#1D4ED8",
+  },
+  dark: {
+    label: "Dark",
+    bg: "#0B1220",
+    bg2: "#0F172A",
+    text: "#E5E7EB",
+    sub: "#94A3B8",
+    accent: "#3B82F6",
+    accentDark: "#2563EB",
+  },
+};
+
 const THEMES = {
   kasoLight: {
     label: "Kaso Light",
@@ -210,7 +231,7 @@ const DEFAULT_CFG = {
   assetType: "post",
   template: "horizontal",
   plat: "xPost",
-  appTheme: "kasoDark",
+  appTheme: "light",
   theme: "kasoLight",
   layout: "left",
   fontPair: "readable",
@@ -256,7 +277,7 @@ function resolveTheme(cfg) {
 }
 
 function resolveUiTheme(cfg) {
-  return THEMES[cfg.appTheme] || THEMES.kasoDark;
+  return APP_THEMES[cfg.appTheme] || APP_THEMES.light;
 }
 
 function normalizeCfg(rawCfg) {
@@ -769,22 +790,25 @@ export default function App() {
   const themeNow = useMemo(() => resolveTheme(cfg), [cfg]);
   const appThemeNow = useMemo(() => resolveUiTheme(cfg), [cfg]);
   const uiVars = useMemo(() => {
+    const isLightApp = cfg.appTheme === "light";
     const bg = appThemeNow.bg || "#0d1f1c";
     const bg2 = appThemeNow.bg2 || mixHex(bg, "#000000", 0.24);
     const accent = appThemeNow.accent || "#4db896";
     const accentDark = appThemeNow.accentDark || mixHex(accent, "#000000", 0.2);
     const text = appThemeNow.text || "#e9f1ee";
     const sub = appThemeNow.sub || text;
-    const panelBg = withAlpha(bg, 0.68);
-    const panelBgSoft = withAlpha(bg, 0.52);
-    const surface = withAlpha(mixHex(bg, "#ffffff", 0.08), 0.72);
-    const border = withAlpha(accent, 0.28);
-    const borderSoft = withAlpha(accent, 0.18);
-    const chipBg = withAlpha("#ffffff", 0.04);
-    const inputBg = withAlpha("#ffffff", 0.05);
-    const shadow = withAlpha("#000000", 0.34);
+    const panelBg = isLightApp ? withAlpha("#FFFFFF", 0.84) : withAlpha(bg, 0.68);
+    const panelBgSoft = isLightApp ? withAlpha("#FFFFFF", 0.72) : withAlpha(bg, 0.52);
+    const surface = isLightApp ? withAlpha("#FFFFFF", 0.9) : withAlpha(mixHex(bg, "#ffffff", 0.08), 0.72);
+    const border = isLightApp ? "rgba(15,23,42,0.14)" : withAlpha(accent, 0.28);
+    const borderSoft = isLightApp ? "rgba(15,23,42,0.1)" : withAlpha(accent, 0.18);
+    const chipBg = isLightApp ? "rgba(255,255,255,0.86)" : withAlpha("#ffffff", 0.04);
+    const inputBg = isLightApp ? "rgba(255,255,255,0.95)" : withAlpha("#ffffff", 0.05);
+    const shadow = isLightApp ? "rgba(15,23,42,0.14)" : withAlpha("#000000", 0.34);
     return {
-      "--app-bg-gradient": `radial-gradient(circle at 20% 0%, ${mixHex(bg, accentDark, 0.35)} 0%, ${bg} 42%, ${bg2} 100%)`,
+      "--app-bg-gradient": isLightApp
+        ? `linear-gradient(180deg, ${bg} 0%, ${bg2} 100%)`
+        : `radial-gradient(circle at 20% 0%, ${mixHex(bg, accentDark, 0.35)} 0%, ${bg} 42%, ${bg2} 100%)`,
       "--ui-text": text,
       "--ui-subtext": withAlpha(sub, 0.78),
       "--ui-border": border,
@@ -798,7 +822,7 @@ export default function App() {
       "--ui-accent-dark": accentDark,
       "--ui-shadow": shadow,
     };
-  }, [appThemeNow]);
+  }, [appThemeNow, cfg.appTheme]);
 
   const set = useCallback((k, v) => setCfg((p) => ({ ...p, [k]: v })), []);
 
@@ -939,9 +963,9 @@ export default function App() {
           <div className="brand-subtitle">Flower - Branding & Design Module</div>
           <div className="theme-picker-inline">
             <Palette size={13} />
-            <label htmlFor="themeSelect">Theme</label>
+            <label htmlFor="themeSelect">App Theme</label>
             <select id="themeSelect" value={cfg.appTheme} onChange={(e) => setAppThemeKey(e.target.value)}>
-              {Object.entries(THEMES).map(([k, v]) => (
+              {Object.entries(APP_THEMES).map(([k, v]) => (
                 <option key={k} value={k}>
                   {v.label}
                 </option>
