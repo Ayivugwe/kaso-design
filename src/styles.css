@@ -1,0 +1,270 @@
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  background: #0a0604;
+  color: #eee;
+  font-family: Cinzel, serif;
+}
+
+.app-root {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  background: rgba(8, 4, 2, 0.98);
+  border-right: 1px solid rgba(255, 100, 30, 0.1);
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.brand {
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 100, 30, 0.1);
+}
+
+.brand-title {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: #ff8040;
+  font-family: "Playfair Display", serif;
+  line-height: 1;
+}
+
+.brand-subtitle {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: rgba(255, 140, 60, 0.4);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.section {
+  margin-bottom: 18px;
+}
+
+.section-title {
+  font-size: 9px;
+  letter-spacing: 0.35em;
+  color: rgba(255, 140, 60, 0.45);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.field {
+  margin-bottom: 10px;
+}
+
+.field-label {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: rgba(255, 180, 100, 0.5);
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.input {
+  width: 100%;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 100, 30, 0.2);
+  border-radius: 6px;
+  color: #ffe8d0;
+  font-family: "EB Garamond", serif;
+  font-size: 15px;
+  outline: none;
+}
+
+.input:focus {
+  border-color: #d94f14;
+}
+
+.textarea {
+  resize: vertical;
+}
+
+.toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.chip {
+  padding: 4px 11px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 100, 30, 0.25);
+  background: transparent;
+  color: rgba(255, 200, 140, 0.6);
+  font-family: Cinzel, serif;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.15s;
+}
+
+.chip-active {
+  border-color: #d94f14;
+  background: #d94f14;
+  color: white;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.toggle-label {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: rgba(255, 180, 100, 0.6);
+  text-transform: uppercase;
+}
+
+.switch {
+  width: 34px;
+  height: 18px;
+  border-radius: 9px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: white;
+  transition: left 0.2s;
+}
+
+.switch-on {
+  background: #d94f14;
+}
+
+.switch-on::after {
+  left: 18px;
+}
+
+.hint {
+  font-size: 9px;
+  color: rgba(255, 140, 60, 0.3);
+  letter-spacing: 0.15em;
+  margin-top: 6px;
+}
+
+.action-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: auto;
+  margin-bottom: 10px;
+}
+
+.ghost-btn {
+  padding: 8px 0;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 100, 30, 0.25);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 220, 180, 0.9);
+  font-family: Cinzel, serif;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.download-btn {
+  padding: 11px 0;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #d94f14, #9a2e06);
+  border: none;
+  color: white;
+  font-family: Cinzel, serif;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.download-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.hidden-file {
+  display: none;
+}
+
+.preview-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  gap: 14px;
+  overflow-y: auto;
+}
+
+.preview-meta {
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  color: rgba(255, 140, 60, 0.45);
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.message {
+  font-size: 10px;
+  color: rgba(255, 220, 180, 0.8);
+}
+
+@media (max-width: 980px) {
+  .app-root {
+    flex-direction: column;
+    overflow: auto;
+  }
+
+  .sidebar {
+    width: 100%;
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 100, 30, 0.1);
+    max-height: none;
+  }
+
+  .preview-pane {
+    justify-content: flex-start;
+    padding: 20px 12px 28px;
+  }
+}
