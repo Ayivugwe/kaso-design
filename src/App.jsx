@@ -1,11 +1,19 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+const TEMPLATES = {
+  horizontal: { label: "Horizontal" },
+  square: { label: "Square" },
+  vertical: { label: "Vertical" },
+};
 
 const PLATFORMS = {
-  twitter: { label: "Twitter / X", w: 1500, h: 500, aspect: 3 },
-  linkedin: { label: "LinkedIn", w: 1584, h: 396, aspect: 4 },
-  facebook: { label: "Facebook", w: 820, h: 312, aspect: 2.63 },
-  instagram: { label: "Instagram", w: 1080, h: 1080, aspect: 1 },
-  og: { label: "OG / Blog", w: 1200, h: 630, aspect: 1.9 },
+  twitter: { label: "Twitter / X", w: 1500, h: 500, template: "horizontal" },
+  linkedin: { label: "LinkedIn", w: 1584, h: 396, template: "horizontal" },
+  facebook: { label: "Facebook", w: 820, h: 312, template: "horizontal" },
+  og: { label: "OG / Blog", w: 1200, h: 630, template: "horizontal" },
+  instagram: { label: "Instagram", w: 1080, h: 1080, template: "square" },
+  portrait: { label: "Portrait", w: 1080, h: 1350, template: "vertical" },
+  story: { label: "Story", w: 1080, h: 1920, template: "vertical" },
 };
 
 const THEMES = {
@@ -70,7 +78,7 @@ const THEMES = {
     muted: "#FF8040",
     accent: "#FF6B2B",
     accentDark: "#C84010",
-    tile: "rgba(255,90,20,0.09)",
+    tile: "#2A140A",
     tileS: "#D94F14",
     sOp: 0.3,
   },
@@ -79,12 +87,12 @@ const THEMES = {
     bg: "#BF3F0F",
     bg2: null,
     text: "#FFFFFF",
-    sub: "rgba(255,255,255,0.85)",
-    muted: "rgba(255,255,255,0.65)",
-    accent: "rgba(255,255,255,0.9)",
-    accentDark: "rgba(255,255,255,0.6)",
-    tile: "rgba(255,255,255,0.12)",
-    tileS: "rgba(255,255,255,0.3)",
+    sub: "#F8DCCD",
+    muted: "#F1C0A6",
+    accent: "#FFF0E8",
+    accentDark: "#FBD8C2",
+    tile: "#D86639",
+    tileS: "#FCE3D5",
     sOp: 1,
   },
   grad: {
@@ -92,12 +100,12 @@ const THEMES = {
     bg: "#D94F14",
     bg2: "#7A1E00",
     text: "#FFFFFF",
-    sub: "rgba(255,255,255,0.85)",
-    muted: "rgba(255,255,255,0.65)",
-    accent: "rgba(255,255,255,0.9)",
-    accentDark: "rgba(255,255,255,0.6)",
-    tile: "rgba(255,255,255,0.1)",
-    tileS: "rgba(255,255,255,0.25)",
+    sub: "#F6DDD0",
+    muted: "#F1C1A7",
+    accent: "#FFF3EC",
+    accentDark: "#F7C9AE",
+    tile: "#E17B4B",
+    tileS: "#FFD8C4",
     sOp: 1,
   },
   coal: {
@@ -109,7 +117,7 @@ const THEMES = {
     muted: "#9A4010",
     accent: "#D94F14",
     accentDark: "#9A2E06",
-    tile: "rgba(217,79,20,0.12)",
+    tile: "#211610",
     tileS: "#D94F14",
     sOp: 0.3,
   },
@@ -122,7 +130,7 @@ const THEMES = {
     muted: "#9A5020",
     accent: "#BF3F0F",
     accentDark: "#7A1E00",
-    tile: "rgba(191,63,15,0.12)",
+    tile: "#DCC39B",
     tileS: "#BF3F0F",
     sOp: 0.2,
   },
@@ -162,23 +170,86 @@ const FONT_PAIRS = {
 };
 
 const DEFAULT_CFG = {
+  template: "horizontal",
   plat: "twitter",
+  appTheme: "kasoDark",
   theme: "kasoLight",
   layout: "left",
   fontPair: "classic",
   iconStyle: "tile",
   title: "Kaso",
   tagline: "Flower - Branding & Design Module",
-  description: "Create, customize, and export beautiful visual assets with a simple, elegant interface.",
+  description: "Create, customize, and export beautiful visual assets with a clean, elegant flow.",
   website: "peacae.com",
   handle: "@kaso_design",
   showIcon: true,
   isHQ: false,
   showDivider: true,
   showWatermark: true,
+  useCustomTheme: false,
+  customTheme: null,
 };
 
-const STORAGE_KEY = "kaso-design-v1";
+const STORAGE_KEY = "kaso-design-v2";
+const THEME_EDIT_FIELDS = [
+  { key: "bg", label: "Background" },
+  { key: "bg2", label: "Gradient 2" },
+  { key: "text", label: "Text" },
+  { key: "sub", label: "Subtext" },
+  { key: "muted", label: "Muted" },
+  { key: "accent", label: "Accent" },
+  { key: "accentDark", label: "Accent Dark" },
+  { key: "tile", label: "Tile Fill" },
+  { key: "tileS", label: "Tile Stroke" },
+];
+
+function resolveTheme(cfg) {
+  const base = THEMES[cfg.theme] || THEMES.kasoLight;
+  if (!cfg.useCustomTheme || !cfg.customTheme) {
+    return base;
+  }
+  return {
+    ...base,
+    ...cfg.customTheme,
+    label: `Custom ${base.label}`,
+    bg2: cfg.customTheme.bg2 || null,
+    sOp: Number.isFinite(cfg.customTheme.sOp) ? cfg.customTheme.sOp : base.sOp,
+  };
+}
+
+function resolveUiTheme(cfg) {
+  return THEMES[cfg.appTheme] || THEMES.kasoDark;
+}
+
+function hexToRgb(hex) {
+  if (!hex || !hex.startsWith("#")) return null;
+  const raw = hex.replace("#", "");
+  const normalized = raw.length === 3 ? raw.split("").map((x) => `${x}${x}`).join("") : raw;
+  const val = Number.parseInt(normalized, 16);
+  if (Number.isNaN(val)) return null;
+  return {
+    r: (val >> 16) & 255,
+    g: (val >> 8) & 255,
+    b: val & 255,
+  };
+}
+
+function withAlpha(hex, alpha) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
+}
+
+function mixHex(a, b, t) {
+  const c1 = hexToRgb(a);
+  const c2 = hexToRgb(b);
+  if (!c1 || !c2) return a;
+  const lerp = (x, y) => Math.round(x + (y - x) * t);
+  const r = lerp(c1.r, c2.r).toString(16).padStart(2, "0");
+  const g = lerp(c1.g, c2.g).toString(16).padStart(2, "0");
+  const bch = lerp(c1.b, c2.b).toString(16).padStart(2, "0");
+  return `#${r}${g}${bch}`;
+}
 
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
@@ -194,51 +265,41 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-function drawFlowerMarkCanvas(ctx, tx, ty, size, isHQ, petalFill, hqColor) {
-  const cx = tx + size / 2;
-  const cy = ty + size / 2;
-  const petalW = size * 0.2;
-  const petalH = size * 0.42;
-  const petalOffset = size * 0.23;
-  const petalsOpacity = [1, 0.85, 0.7, 1, 0.85, 0.7];
+function drawDesignMonogram(ctx, tx, ty, size, isHQ, kColor, hqColor) {
+  const sc = size / 150;
+  const ky = isHQ ? 14 : 18;
+  const kh = isHQ ? 88 : 90;
+  const ny = isHQ ? 45 : 50;
+  const pu = isHQ ? [[42, 58], [88, 14], [112, 14], [112, 34], [66, 58]] : [[42, 63], [88, 18], [112, 18], [112, 38], [66, 63]];
+  const pl = isHQ ? [[42, 58], [66, 58], [112, 88], [112, 108], [88, 108]] : [[42, 63], [66, 63], [112, 92], [112, 112], [88, 112]];
 
-  for (let i = 0; i < 6; i += 1) {
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate((i * Math.PI) / 3);
-    ctx.globalAlpha = petalsOpacity[i];
-    ctx.fillStyle = petalFill;
-    roundRect(ctx, -petalW / 2, -petalOffset - petalH / 2, petalW, petalH, petalW * 0.48);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  ctx.save();
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = hqColor;
-  ctx.beginPath();
-  ctx.arc(cx, cy, size * 0.1, 0, Math.PI * 2);
+  ctx.fillStyle = kColor;
+  roundRect(ctx, tx + 18 * sc, ty + ky * sc, 24 * sc, kh * sc, 5 * sc);
   ctx.fill();
-  ctx.globalAlpha = 0.35;
-  ctx.fillStyle = "white";
   ctx.beginPath();
-  ctx.arc(cx - size * 0.028, cy - size * 0.028, size * 0.042, 0, Math.PI * 2);
+  pu.forEach(([x, y], i) => (i ? ctx.lineTo(tx + x * sc, ty + y * sc) : ctx.moveTo(tx + x * sc, ty + y * sc)));
+  ctx.closePath();
   ctx.fill();
-  ctx.restore();
+  ctx.beginPath();
+  pl.forEach(([x, y], i) => (i ? ctx.lineTo(tx + x * sc, ty + y * sc) : ctx.moveTo(tx + x * sc, ty + y * sc)));
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillRect(tx + 42 * sc, ty + ny * sc, 24 * sc, 26 * sc);
 
-  if (isHQ) {
+  if (isHQ && hqColor) {
     ctx.save();
-    ctx.globalAlpha = 0.55;
     ctx.strokeStyle = hqColor;
-    ctx.lineWidth = Math.max(1.5, size * 0.014);
+    ctx.lineWidth = 1.5 * sc;
+    ctx.globalAlpha = 0.5;
     ctx.beginPath();
-    ctx.arc(cx, cy, size * 0.45, 0, Math.PI * 2);
+    ctx.moveTo(tx + 116 * sc, ty + 90 * sc);
+    ctx.lineTo(tx + 116 * sc, ty + 110 * sc);
     ctx.stroke();
     ctx.globalAlpha = 1;
     ctx.fillStyle = hqColor;
-    ctx.font = `700 ${Math.max(9, size * 0.085)}px Cinzel,serif`;
+    ctx.font = `900 ${13 * sc}px Cinzel,serif`;
     ctx.textAlign = "center";
-    ctx.fillText("HQ", tx + size * 0.83, ty + size * 0.9);
+    ctx.fillText("HQ", tx + 130 * sc, ty + 105 * sc);
     ctx.textAlign = "left";
     ctx.restore();
   }
@@ -263,24 +324,9 @@ function wrapText(ctx, text, x, y, maxW, lineH) {
 }
 
 function renderToCanvas(cfg) {
-  const {
-    plat,
-    theme: themeName,
-    title,
-    tagline,
-    description,
-    website,
-    handle,
-    showIcon,
-    isHQ,
-    iconStyle,
-    layout,
-    fontPair,
-    showDivider,
-    showWatermark,
-  } = cfg;
+  const { plat, theme: themeName, title, tagline, description, website, handle, showIcon, isHQ, iconStyle, layout, fontPair, showDivider, showWatermark } = cfg;
   const sz = PLATFORMS[plat];
-  const t = THEMES[themeName];
+  const t = resolveTheme(cfg);
   const fp = FONT_PAIRS[fontPair];
   const W = sz.w;
   const H = sz.h;
@@ -303,7 +349,7 @@ function renderToCanvas(cfg) {
   if (showWatermark) {
     ctx.save();
     ctx.globalAlpha = 0.04;
-    drawFlowerMarkCanvas(ctx, W * 0.62, H * 0.4, H * 0.85, false, t.text, t.text);
+    drawDesignMonogram(ctx, W * 0.62, H * 0.4, H * 0.85, false, t.text, null);
     ctx.restore();
   }
 
@@ -343,18 +389,18 @@ function renderToCanvas(cfg) {
       ctx.globalAlpha = 1;
       ctx.restore();
     }
-    const logoGradient = ctx.createLinearGradient(ix, iy, ix, iy + iconSz);
-    logoGradient.addColorStop(0, t.accent);
-    logoGradient.addColorStop(1, t.accentDark);
-    const logoFill = themeName === "rust" || themeName === "grad" ? "white" : logoGradient;
-    const hqColor = themeName === "rust" || themeName === "grad" ? "rgba(255,255,255,0.88)" : t.accentDark;
-    drawFlowerMarkCanvas(ctx, ix, iy, iconSz, isHQ, logoFill, hqColor);
+    const kGrad = ctx.createLinearGradient(ix, iy, ix, iy + iconSz);
+    kGrad.addColorStop(0, t.accent);
+    kGrad.addColorStop(1, t.accentDark);
+    const useWhiteMark = Boolean(t.bg2);
+    const kColor = useWhiteMark ? "white" : kGrad;
+    const hqColor = useWhiteMark ? "rgba(255,255,255,0.88)" : t.accentDark;
+    drawDesignMonogram(ctx, ix, iy, iconSz, isHQ, kColor, hqColor);
     iconEndX = isCentered ? W / 2 : ix + iconSz + W * 0.03;
   }
 
   const tx = isCentered ? startX : showIcon && !isCentered ? iconEndX : padX;
-  const textAlign = isCentered ? "center" : "left";
-  ctx.textAlign = textAlign;
+  ctx.textAlign = isCentered ? "center" : "left";
   let curY = isCentered ? (showIcon ? padY + iconSz + H * 0.06 : H * 0.25) : H / 2 - H * 0.22;
 
   const titleSz = Math.min(H * 0.14, W * 0.052);
@@ -409,11 +455,12 @@ function renderToCanvas(cfg) {
   if (isSplit && showIcon) {
     const rix = W * 0.62;
     const riy = H / 2 - iconSz * 0.7;
-    const logoGradient = ctx.createLinearGradient(rix, riy, rix, riy + iconSz * 1.4);
-    logoGradient.addColorStop(0, t.accent);
-    logoGradient.addColorStop(1, t.accentDark);
-    const logoFill = themeName === "rust" || themeName === "grad" ? "white" : logoGradient;
-    const hqColor = themeName === "rust" || themeName === "grad" ? "rgba(255,255,255,0.88)" : t.muted;
+    const kGrad = ctx.createLinearGradient(rix, riy, rix, riy + iconSz * 1.4);
+    kGrad.addColorStop(0, t.accent);
+    kGrad.addColorStop(1, t.accentDark);
+    const useWhiteMark = Boolean(t.bg2);
+    const kColor = useWhiteMark ? "white" : kGrad;
+    const hqColor = useWhiteMark ? "rgba(255,255,255,0.88)" : t.muted;
     if (iconStyle === "tile") {
       ctx.save();
       roundRect(ctx, rix, riy, iconSz * 1.4, iconSz * 1.4, iconSz * 0.187 * 1.4);
@@ -426,19 +473,22 @@ function renderToCanvas(cfg) {
       ctx.globalAlpha = 1;
       ctx.restore();
     }
-    drawFlowerMarkCanvas(ctx, rix, riy, iconSz * 1.4, isHQ, logoFill, hqColor);
+    drawDesignMonogram(ctx, rix, riy, iconSz * 1.4, isHQ, kColor, hqColor);
   }
 
-  ctx.textAlign = "left";
   return c.toDataURL("image/png");
 }
 
-function KSvg({ size, t, isHQ, iconStyle }) {
+function DesignLogoSvg({ size, t, isHQ, iconStyle }) {
   const id = useRef(`k${Math.random().toString(36).slice(2, 7)}`).current;
-  const isLight = t.tileS === "rgba(255,255,255,0.3)" || t.tileS === "rgba(255,255,255,0.25)";
-  const kColor = isLight ? "white" : `url(#${id})`;
-  const hqColor = isLight ? "rgba(255,255,255,0.88)" : t.accentDark;
-  const petalsOpacity = [1, 0.85, 0.7, 1, 0.85, 0.7];
+  const light = t.tileS.includes("255");
+  const kColor = light ? "white" : `url(#${id})`;
+  const hqColor = light ? "rgba(255,255,255,0.88)" : t.accentDark;
+  const ptsU = isHQ ? "42,58 88,14 112,14 112,34 66,58" : "42,63 88,18 112,18 112,38 66,63";
+  const ptsL = isHQ ? "42,58 66,58 112,88 112,108 88,108" : "42,63 66,63 112,92 112,112 88,112";
+  const ky = isHQ ? 14 : 18;
+  const kh = isHQ ? 88 : 90;
+  const ny = isHQ ? 45 : 50;
 
   return (
     <svg viewBox="0 0 150 150" width={size} height={size} style={{ flexShrink: 0, display: "block" }}>
@@ -453,24 +503,17 @@ function KSvg({ size, t, isHQ, iconStyle }) {
           </clipPath>
         )}
       </defs>
-      {iconStyle === "tile" && (
-        <rect x="4" y="4" width="142" height="142" rx="28" fill={t.tile} stroke={t.tileS} strokeWidth="2" strokeOpacity="0.2" />
-      )}
-      {iconStyle === "circle" && (
-        <circle cx="75" cy="75" r="73" fill={t.tile} stroke={t.tileS} strokeWidth="2" strokeOpacity="0.2" />
-      )}
+      {iconStyle === "tile" && <rect x="4" y="4" width="142" height="142" rx="28" fill={t.tile} stroke={t.tileS} strokeWidth="2" strokeOpacity={t.sOp} />}
+      {iconStyle === "circle" && <circle cx="75" cy="75" r="73" fill={t.tile} stroke={t.tileS} strokeWidth="2" strokeOpacity={t.sOp} />}
       <g clipPath={iconStyle === "circle" ? `url(#${id}clip)` : undefined}>
-        {petalsOpacity.map((opacity, i) => (
-          <g key={i} opacity={opacity} transform={`rotate(${i * 60} 75 75)`}>
-            <rect x="60" y="12" width="30" height="63" rx="14" fill={kColor} />
-          </g>
-        ))}
-        <circle cx="75" cy="75" r="14" fill={hqColor} />
-        <circle cx="71" cy="71" r="6" fill="white" fillOpacity="0.35" />
+        <rect x="18" y={ky} width="24" height={kh} rx="5" fill={kColor} />
+        <polygon points={ptsU} fill={kColor} />
+        <polygon points={ptsL} fill={kColor} />
+        <rect x="42" y={ny} width="24" height="26" fill={kColor} />
         {isHQ && (
           <>
-            <circle cx="75" cy="75" r="67" fill="none" stroke={hqColor} strokeWidth="2.2" strokeOpacity="0.55" />
-            <text x="126" y="136" fontFamily="Cinzel,serif" fontSize="12" fontWeight="700" fill={hqColor} textAnchor="middle">
+            <line x1="116" y1="90" x2="116" y2="110" stroke={hqColor} strokeWidth="1.5" strokeOpacity="0.5" />
+            <text x="130" y="105" fontFamily="Cinzel,serif" fontSize="13" fontWeight="900" fill={hqColor} textAnchor="middle">
               HQ
             </text>
           </>
@@ -480,28 +523,35 @@ function KSvg({ size, t, isHQ, iconStyle }) {
   );
 }
 
+function AppFlowerLogo({ size = 48 }) {
+  const petals = [1, 0.85, 0.7, 1, 0.85, 0.7];
+  return (
+    <svg viewBox="0 0 150 150" width={size} height={size} aria-hidden="true">
+      <defs>
+        <linearGradient id="flowerGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#6DDCB4" />
+          <stop offset="100%" stopColor="#1A7A6A" />
+        </linearGradient>
+      </defs>
+      {petals.map((opacity, i) => (
+        <g key={i} opacity={opacity} transform={`rotate(${i * 60} 75 75)`}>
+          <rect x="60" y="12" width="30" height="63" rx="14" fill="url(#flowerGrad)" />
+        </g>
+      ))}
+      <circle cx="75" cy="75" r="14" fill="#0D1F1C" />
+      <circle cx="70" cy="70" r="5.5" fill="white" fillOpacity="0.3" />
+    </svg>
+  );
+}
+
 function PreviewCard({ cfg }) {
-  const {
-    plat,
-    theme: themeName,
-    title,
-    tagline,
-    description,
-    website,
-    handle,
-    showIcon,
-    isHQ,
-    iconStyle,
-    layout,
-    fontPair,
-    showDivider,
-    showWatermark,
-  } = cfg;
+  const { plat, theme: themeName, title, tagline, description, website, handle, showIcon, isHQ, iconStyle, layout, fontPair, showDivider, showWatermark } = cfg;
   const sz = PLATFORMS[plat];
-  const t = THEMES[themeName];
+  const t = resolveTheme(cfg);
   const fp = FONT_PAIRS[fontPair];
-  const maxW = 680;
-  const scale = Math.min(maxW / sz.w, 340 / sz.h, 1);
+  const template = PLATFORMS[plat].template;
+  const maxBox = template === "vertical" ? { w: 420, h: 760 } : template === "square" ? { w: 640, h: 640 } : { w: 980, h: 430 };
+  const scale = Math.min(maxBox.w / sz.w, maxBox.h / sz.h, 1);
   const dw = sz.w * scale;
   const dh = sz.h * scale;
   const isCentered = layout === "center";
@@ -512,21 +562,10 @@ function PreviewCard({ cfg }) {
   const bgStyle = t.bg2 ? { background: `linear-gradient(145deg,${t.bg},${t.bg2})` } : { background: t.bg };
 
   return (
-    <div
-      style={{
-        ...bgStyle,
-        width: dw,
-        height: dh,
-        borderRadius: 8,
-        position: "relative",
-        overflow: "hidden",
-        boxShadow: "0 20px 72px rgba(0,0,0,0.65)",
-        flexShrink: 0,
-      }}
-    >
+    <div style={{ ...bgStyle, width: dw, height: dh, borderRadius: 14, position: "relative", overflow: "hidden", boxShadow: "0 24px 90px rgba(0,0,0,0.45)", flexShrink: 0 }}>
       {showWatermark && (
         <div style={{ position: "absolute", bottom: 0, right: 0, width: "38%", height: "80%", opacity: 0.04, pointerEvents: "none" }}>
-          <KSvg size="100%" t={t} isHQ={false} iconStyle="naked" />
+          <DesignLogoSvg size="100%" t={t} isHQ={false} iconStyle="naked" />
         </div>
       )}
       <div
@@ -542,7 +581,7 @@ function PreviewCard({ cfg }) {
           textAlign: isCentered ? "center" : "left",
         }}
       >
-        {showIcon && !isSplit && <KSvg size={iconSz} t={t} isHQ={isHQ} iconStyle={iconStyle} />}
+        {showIcon && !isSplit && <DesignLogoSvg size={iconSz} t={t} isHQ={isHQ} iconStyle={iconStyle} />}
         <div style={{ display: "flex", flexDirection: "column", gap: dh * 0.028, maxWidth: isSplit ? "52%" : "100%", alignItems: isCentered ? "center" : "flex-start" }}>
           {title && <div style={{ fontFamily: fp.title, fontWeight: 900, fontSize: Math.min(dh * 0.14, dw * 0.052), color: t.text, letterSpacing: -0.5, lineHeight: 1.1 }}>{title}</div>}
           {showDivider && <div style={{ width: Math.min(48, dw * 0.05), height: Math.max(2, dh * 0.006), background: t.accent, borderRadius: 2 }} />}
@@ -550,25 +589,14 @@ function PreviewCard({ cfg }) {
           {description && <div style={{ fontFamily: fp.body, fontSize: Math.min(dh * 0.048, dw * 0.017), color: t.muted, lineHeight: 1.55, maxWidth: "94%" }}>{description}</div>}
           <div style={{ display: "flex", flexDirection: "column", gap: dh * 0.02, marginTop: dh * 0.01 }}>
             {[website, handle].filter(Boolean).map((m, i) => (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: dw * 0.008,
-                  fontFamily: fp.tag,
-                  fontSize: Math.min(dh * 0.038, dw * 0.014),
-                  letterSpacing: "0.1em",
-                  color: t.muted,
-                }}
-              >
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: dw * 0.008, fontFamily: fp.tag, fontSize: Math.min(dh * 0.038, dw * 0.014), letterSpacing: "0.1em", color: t.muted }}>
                 <span style={{ width: dh * 0.016, height: dh * 0.016, borderRadius: "50%", background: t.accent, flexShrink: 0 }} />
                 {m}
               </div>
             ))}
           </div>
         </div>
-        {showIcon && isSplit && <KSvg size={iconSz * 1.4} t={t} isHQ={isHQ} iconStyle={iconStyle} />}
+        {showIcon && isSplit && <DesignLogoSvg size={iconSz * 1.4} t={t} isHQ={isHQ} iconStyle={iconStyle} />}
       </div>
     </div>
   );
@@ -596,12 +624,7 @@ function ToggleGroup({ options, value, onChange }) {
   return (
     <div className="toggle-group">
       {options.map((o) => (
-        <button
-          key={o.value}
-          type="button"
-          onClick={() => onChange(o.value)}
-          className={`chip ${value === o.value ? "chip-active" : ""}`}
-        >
+        <button key={o.value} type="button" onClick={() => onChange(o.value)} className={`chip ${value === o.value ? "chip-active" : ""}`}>
           {o.label}
         </button>
       ))}
@@ -630,12 +653,95 @@ export default function App() {
   const [downloading, setDownloading] = useState(false);
   const [message, setMessage] = useState("");
   const fileRef = useRef(null);
+  const themeNow = useMemo(() => resolveTheme(cfg), [cfg]);
+  const appThemeNow = useMemo(() => resolveUiTheme(cfg), [cfg]);
+  const uiVars = useMemo(() => {
+    const bg = appThemeNow.bg || "#0d1f1c";
+    const bg2 = appThemeNow.bg2 || mixHex(bg, "#000000", 0.24);
+    const accent = appThemeNow.accent || "#4db896";
+    const accentDark = appThemeNow.accentDark || mixHex(accent, "#000000", 0.2);
+    const text = appThemeNow.text || "#e9f1ee";
+    const sub = appThemeNow.sub || text;
+    const panelBg = withAlpha(bg, 0.68);
+    const panelBgSoft = withAlpha(bg, 0.52);
+    const surface = withAlpha(mixHex(bg, "#ffffff", 0.08), 0.72);
+    const border = withAlpha(accent, 0.28);
+    const borderSoft = withAlpha(accent, 0.18);
+    const chipBg = withAlpha("#ffffff", 0.04);
+    const inputBg = withAlpha("#ffffff", 0.05);
+    const shadow = withAlpha("#000000", 0.34);
+    return {
+      "--app-bg-gradient": `radial-gradient(circle at 20% 0%, ${mixHex(bg, accentDark, 0.35)} 0%, ${bg} 42%, ${bg2} 100%)`,
+      "--ui-text": text,
+      "--ui-subtext": withAlpha(sub, 0.78),
+      "--ui-border": border,
+      "--ui-border-soft": borderSoft,
+      "--ui-panel-bg": panelBg,
+      "--ui-panel-soft": panelBgSoft,
+      "--ui-surface": surface,
+      "--ui-chip-bg": chipBg,
+      "--ui-input-bg": inputBg,
+      "--ui-accent": accent,
+      "--ui-accent-dark": accentDark,
+      "--ui-shadow": shadow,
+    };
+  }, [appThemeNow]);
 
   const set = useCallback((k, v) => setCfg((p) => ({ ...p, [k]: v })), []);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
   }, [cfg]);
+
+  const platformOptions = useMemo(() => {
+    return Object.entries(PLATFORMS)
+      .filter(([, v]) => v.template === cfg.template)
+      .map(([k, v]) => ({ value: k, label: v.label }));
+  }, [cfg.template]);
+
+  const setTemplate = useCallback((template) => {
+    const firstPlatform = Object.entries(PLATFORMS).find(([, v]) => v.template === template)?.[0] || "twitter";
+    setCfg((p) => ({ ...p, template, plat: firstPlatform }));
+  }, []);
+
+  const setPlatform = useCallback((plat) => {
+    setCfg((p) => ({ ...p, plat, template: PLATFORMS[plat].template }));
+  }, []);
+
+  const setAppThemeKey = useCallback((themeKey) => {
+    setCfg((p) => {
+      return { ...p, appTheme: themeKey };
+    });
+  }, []);
+
+  const toggleCustomTheme = useCallback(
+    (value) => {
+      setCfg((p) => {
+        if (!value) {
+          return { ...p, useCustomTheme: false };
+        }
+        const base = THEMES[p.theme] || THEMES.kasoLight;
+        return {
+          ...p,
+          useCustomTheme: true,
+          customTheme: p.customTheme || { ...base },
+        };
+      });
+    },
+    [],
+  );
+
+  const setCustomThemeField = useCallback((key, value) => {
+    setCfg((p) => {
+      const base = THEMES[p.theme] || THEMES.kasoLight;
+      const existing = p.customTheme || { ...base };
+      return {
+        ...p,
+        useCustomTheme: true,
+        customTheme: { ...existing, [key]: value },
+      };
+    });
+  }, []);
 
   const download = useCallback(() => {
     setDownloading(true);
@@ -663,14 +769,14 @@ export default function App() {
 
   const importPreset = useCallback((event) => {
     const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
+    if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
       try {
         const parsed = JSON.parse(String(reader.result || "{}"));
-        setCfg({ ...DEFAULT_CFG, ...parsed });
+        const merged = { ...DEFAULT_CFG, ...parsed };
+        const plat = PLATFORMS[merged.plat] ? merged.plat : DEFAULT_CFG.plat;
+        setCfg({ ...merged, plat, template: PLATFORMS[plat].template });
         setMessage("Preset imported.");
       } catch {
         setMessage("Import failed: invalid JSON.");
@@ -686,65 +792,91 @@ export default function App() {
     setMessage("Reset to defaults.");
   }, []);
 
-  const sz = PLATFORMS[cfg.plat];
+  const size = PLATFORMS[cfg.plat];
 
   return (
-    <div className="app-root">
+    <div className="app-root" style={uiVars}>
       <aside className="sidebar">
         <div className="brand">
           <div className="brand-mark">
-            <KSvg size={54} t={THEMES.kasoGradient} isHQ={false} iconStyle="naked" />
+            <AppFlowerLogo size={54} />
           </div>
           <div className="brand-title">Kaso</div>
           <div className="brand-subtitle">Flower - Branding & Design Module</div>
+          <div className="theme-picker-inline">
+            <label htmlFor="themeSelect">Theme</label>
+            <select id="themeSelect" value={cfg.appTheme} onChange={(e) => setAppThemeKey(e.target.value)}>
+              {Object.entries(THEMES).map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        <Section title="Platform">
-          <ToggleGroup value={cfg.plat} onChange={(v) => set("plat", v)} options={Object.entries(PLATFORMS).map(([k, v]) => ({ value: k, label: v.label }))} />
-          <div className="hint">
-            {sz.w} x {sz.h}px
-          </div>
-        </Section>
-
         <Section title="Content">
-          <Field label="Title">
+          <Field label="Brand Name">
             <input value={cfg.title} onChange={(e) => set("title", e.target.value)} className="input" />
           </Field>
           <Field label="Tagline">
-            <input value={cfg.tagline} onChange={(e) => set("tagline", e.target.value)} className="input" />
+            <textarea value={cfg.tagline} onChange={(e) => set("tagline", e.target.value)} rows={2} className="input textarea" />
           </Field>
-          <Field label="Short Description">
-            <textarea value={cfg.description} onChange={(e) => set("description", e.target.value)} rows={3} className="input textarea" placeholder="Optional..." />
+          <Field label="Description">
+            <textarea value={cfg.description} onChange={(e) => set("description", e.target.value)} rows={4} className="input textarea" placeholder="Keep it short and clear..." />
           </Field>
           <Field label="Website">
             <input value={cfg.website} onChange={(e) => set("website", e.target.value)} className="input" />
           </Field>
-          <Field label="Social Handle">
+          <Field label="Handle">
             <input value={cfg.handle} onChange={(e) => set("handle", e.target.value)} className="input" />
           </Field>
         </Section>
 
-        <Section title="Theme">
-          <ToggleGroup value={cfg.theme} onChange={(v) => set("theme", v)} options={Object.entries(THEMES).map(([k, v]) => ({ value: k, label: v.label }))} />
+        <Section title="Look & Feel">
+          <Field label="Design Theme">
+            <ToggleGroup value={cfg.theme} onChange={(v) => set("theme", v)} options={Object.entries(THEMES).map(([k, v]) => ({ value: k, label: v.label }))} />
+          </Field>
+          <Toggle label="Custom colors" value={cfg.useCustomTheme} onChange={toggleCustomTheme} />
+          {cfg.useCustomTheme && (
+            <>
+              <div className="color-grid">
+                {THEME_EDIT_FIELDS.map((item) => (
+                  <label key={item.key} className="color-field">
+                    <span>{item.label}</span>
+                    <input
+                      type="color"
+                      value={themeNow[item.key] || "#000000"}
+                      onChange={(e) => setCustomThemeField(item.key, e.target.value)}
+                    />
+                  </label>
+                ))}
+              </div>
+              <Field label="Tile Stroke Opacity">
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={themeNow.sOp}
+                  onChange={(e) => setCustomThemeField("sOp", Number(e.target.value))}
+                  className="range-input"
+                />
+              </Field>
+            </>
+          )}
+          <Field label="Layout">
+            <ToggleGroup value={cfg.layout} onChange={(v) => set("layout", v)} options={Object.entries(LAYOUTS).map(([k, v]) => ({ value: k, label: v.label }))} />
+          </Field>
+          <Field label="Typography">
+            <ToggleGroup value={cfg.fontPair} onChange={(v) => set("fontPair", v)} options={Object.entries(FONT_PAIRS).map(([k, v]) => ({ value: k, label: v.label }))} />
+          </Field>
         </Section>
 
-        <Section title="Layout">
-          <ToggleGroup value={cfg.layout} onChange={(v) => set("layout", v)} options={Object.entries(LAYOUTS).map(([k, v]) => ({ value: k, label: v.label }))} />
-        </Section>
-
-        <Section title="Typography">
-          <ToggleGroup value={cfg.fontPair} onChange={(v) => set("fontPair", v)} options={Object.entries(FONT_PAIRS).map(([k, v]) => ({ value: k, label: v.label }))} />
-        </Section>
-
-        <Section title="Icon">
+        <Section title="Icon & Details">
           <Toggle label="Show icon" value={cfg.showIcon} onChange={(v) => set("showIcon", v)} />
           <Toggle label="HQ version" value={cfg.isHQ} onChange={(v) => set("isHQ", v)} />
-          {cfg.showIcon && (
-            <ToggleGroup value={cfg.iconStyle} onChange={(v) => set("iconStyle", v)} options={Object.entries(ICON_STYLES).map(([k, v]) => ({ value: k, label: v.label }))} />
-          )}
-        </Section>
-
-        <Section title="Details">
+          {cfg.showIcon && <ToggleGroup value={cfg.iconStyle} onChange={(v) => set("iconStyle", v)} options={Object.entries(ICON_STYLES).map(([k, v]) => ({ value: k, label: v.label }))} />}
           <Toggle label="Divider line" value={cfg.showDivider} onChange={(v) => set("showDivider", v)} />
           <Toggle label="Watermark" value={cfg.showWatermark} onChange={(v) => set("showWatermark", v)} />
         </Section>
@@ -767,10 +899,29 @@ export default function App() {
         </button>
       </aside>
 
-      <main className="preview-pane">
-        <PreviewCard cfg={cfg} />
-        <div className="preview-meta">
-          {PLATFORMS[cfg.plat].label} | {THEMES[cfg.theme].label} | {LAYOUTS[cfg.layout].label}
+      <main className="workspace">
+        <div className="workspace-shell">
+          <div className="workspace-toolbar">
+            <div className="toolbar-group">
+              <span className="toolbar-label">Template</span>
+              <ToggleGroup value={cfg.template} onChange={setTemplate} options={Object.entries(TEMPLATES).map(([k, v]) => ({ value: k, label: v.label }))} />
+            </div>
+            <div className="toolbar-group">
+              <span className="toolbar-label">Platform</span>
+              <ToggleGroup value={cfg.plat} onChange={setPlatform} options={platformOptions} />
+            </div>
+          </div>
+
+          <div className="preview-stage">
+            <PreviewCard cfg={cfg} />
+          </div>
+
+          <div className="workspace-meta">
+            <span>{PLATFORMS[cfg.plat].label}</span>
+            <span>{size.w} x {size.h}px</span>
+            <span>{themeNow.label}</span>
+            <span>{LAYOUTS[cfg.layout].label}</span>
+          </div>
         </div>
         {message && <div className="message">{message}</div>}
       </main>

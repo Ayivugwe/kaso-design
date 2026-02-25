@@ -171,4 +171,7 @@ Any static host works (Vercel, Netlify, Cloudflare Pages, GitHub Pages):
 
 ## License
 
-Proprietary unless you choose to add an open-source license.
+No open-source license is set yet.
+
+This means default copyright applies and reuse is not granted automatically.
+If you want public reuse, add a license file (for example MIT, Apache-2.0, or GPL).
