@@ -225,6 +225,18 @@ const FONT_PAIRS = {
     body: "'Cinzel',serif",
     tag: "'EB Garamond',serif",
   },
+  elegant: {
+    label: "Elegant",
+    title: "'Playfair Display',serif",
+    body: "'EB Garamond',serif",
+    tag: "'EB Garamond',serif",
+  },
+  compact: {
+    label: "Compact",
+    title: "'Manrope',sans-serif",
+    body: "'Inter',sans-serif",
+    tag: "'Inter',sans-serif",
+  },
 };
 
 const DEFAULT_CFG = {
@@ -393,11 +405,66 @@ function wrapText(ctx, text, x, y, maxW, lineH) {
   return lines.length * lineH;
 }
 
+function getTemplateMetrics(template) {
+  if (template === "vertical") {
+    return {
+      padX: 0.09,
+      padY: 0.09,
+      titleMul: 1.02,
+      tagMul: 1.02,
+      descMul: 1.01,
+      metaMul: 1.02,
+    };
+  }
+  if (template === "square") {
+    return {
+      padX: 0.085,
+      padY: 0.1,
+      titleMul: 1,
+      tagMul: 1,
+      descMul: 1,
+      metaMul: 1,
+    };
+  }
+  return {
+    padX: 0.08,
+    padY: 0.12,
+    titleMul: 1,
+    tagMul: 1,
+    descMul: 1,
+    metaMul: 1,
+  };
+}
+
+function getTypographySizes(H, W, metrics, previewMode = false) {
+  const titleBase = Math.min(H * 0.14, W * 0.052) * metrics.titleMul;
+  const tagBase = Math.min(H * 0.062, W * 0.022) * metrics.tagMul;
+  const descBase = Math.min(H * 0.048, W * 0.017) * metrics.descMul;
+  const metaBase = Math.min(H * 0.038, W * 0.014) * metrics.metaMul;
+
+  if (!previewMode) {
+    return {
+      title: Math.max(30, titleBase),
+      tag: Math.max(17, tagBase),
+      desc: Math.max(14, descBase),
+      meta: Math.max(11, metaBase),
+    };
+  }
+
+  return {
+    title: Math.max(26, titleBase),
+    tag: Math.max(15, tagBase),
+    desc: Math.max(12.5, descBase),
+    meta: Math.max(10.5, metaBase),
+  };
+}
+
 function renderToCanvas(cfg) {
-  const { plat, theme: themeName, title, tagline, description, website, handle, showIcon, isHQ, iconStyle, layout, fontPair, showDivider, showWatermark } = cfg;
+  const { plat, title, tagline, description, website, handle, showIcon, isHQ, iconStyle, layout, fontPair, showDivider, showWatermark } = cfg;
   const sz = PLATFORMS[plat];
   const t = resolveTheme(cfg);
   const fp = FONT_PAIRS[fontPair];
+  const metrics = getTemplateMetrics(PLATFORMS[plat].template);
   const W = sz.w;
   const H = sz.h;
 
@@ -425,11 +492,12 @@ function renderToCanvas(cfg) {
 
   const isCentered = layout === "center";
   const isSplit = layout === "split";
-  const padX = W * 0.08;
-  const padY = H * 0.12;
+  const padX = W * metrics.padX;
+  const padY = H * metrics.padY;
   const contentW = isSplit ? W * 0.52 : W * 0.84;
   const iconSz = Math.min(H * 0.38, W * 0.12);
   const startX = isCentered ? W / 2 : padX;
+  const typeSizes = getTypographySizes(H, W, metrics, false);
 
   let iconEndX = padX;
   if (showIcon) {
@@ -473,7 +541,7 @@ function renderToCanvas(cfg) {
   ctx.textAlign = isCentered ? "center" : "left";
   let curY = isCentered ? (showIcon ? padY + iconSz + H * 0.06 : H * 0.25) : H / 2 - H * 0.22;
 
-  const titleSz = Math.min(H * 0.14, W * 0.052);
+  const titleSz = typeSizes.title;
   ctx.font = `900 ${titleSz}px ${fp.title}`;
   ctx.fillStyle = t.text;
   curY += wrapText(ctx, title, tx, curY, contentW, titleSz * 1.2);
@@ -488,7 +556,7 @@ function renderToCanvas(cfg) {
   }
 
   if (tagline) {
-    const tagSz = Math.min(H * 0.062, W * 0.022);
+    const tagSz = typeSizes.tag;
     ctx.font = `italic ${tagSz}px ${fp.body}`;
     ctx.fillStyle = t.sub;
     curY += wrapText(ctx, tagline, tx, curY, contentW, tagSz * 1.5);
@@ -496,14 +564,14 @@ function renderToCanvas(cfg) {
   }
 
   if (description) {
-    const descSz = Math.min(H * 0.048, W * 0.017);
+    const descSz = typeSizes.desc;
     ctx.font = `${descSz}px ${fp.body}`;
     ctx.fillStyle = t.muted;
     curY += wrapText(ctx, description, tx, curY, contentW, descSz * 1.6);
     curY += descSz * 0.5;
   }
 
-  const metaSz = Math.min(H * 0.038, W * 0.014);
+  const metaSz = typeSizes.meta;
   ctx.font = `500 ${metaSz}px ${fp.tag}`;
   ctx.fillStyle = t.muted;
   const metaItems = [website, handle].filter(Boolean);
@@ -615,22 +683,24 @@ function AppFlowerLogo({ size = 48 }) {
 }
 
 function PreviewCard({ cfg }) {
-  const { plat, theme: themeName, title, tagline, description, website, handle, showIcon, isHQ, iconStyle, layout, fontPair, showDivider, showWatermark } = cfg;
+  const { plat, title, tagline, description, website, handle, showIcon, isHQ, iconStyle, layout, fontPair, showDivider, showWatermark } = cfg;
   const target = PLATFORMS[plat];
   const designSurface = DESIGN_SURFACES[cfg.template] || DESIGN_SURFACES.horizontal;
   const sz = designSurface;
   const t = resolveTheme(cfg);
   const fp = FONT_PAIRS[fontPair];
   const template = cfg.template;
+  const metrics = getTemplateMetrics(template);
   const maxBox = template === "vertical" ? { w: 420, h: 760 } : template === "square" ? { w: 640, h: 640 } : { w: 980, h: 430 };
   const scale = Math.min(maxBox.w / sz.w, maxBox.h / sz.h, 1);
   const dw = sz.w * scale;
   const dh = sz.h * scale;
   const isCentered = layout === "center";
   const isSplit = layout === "split";
-  const iconSz = Math.min(dh * 0.38, dw * 0.12);
-  const padX = dw * 0.08;
-  const padY = dh * 0.11;
+  const iconSz = Math.min(dh * 0.36, dw * 0.12);
+  const padX = dw * metrics.padX;
+  const padY = dh * metrics.padY;
+  const typeSizes = getTypographySizes(dh, dw, metrics, true);
   const bgStyle = t.bg2 ? { background: `linear-gradient(145deg,${t.bg},${t.bg2})` } : { background: t.bg };
   const targetAspect = target.w / target.h;
   const previewAspect = sz.w / sz.h;
@@ -649,6 +719,16 @@ function PreviewCard({ cfg }) {
 
   return (
     <div style={{ ...bgStyle, width: dw, height: dh, borderRadius: 14, position: "relative", overflow: "hidden", boxShadow: "0 24px 90px rgba(0,0,0,0.45)", flexShrink: 0 }}>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          border: "1px solid rgba(255,255,255,0.14)",
+          borderRadius: 14,
+          pointerEvents: "none",
+          zIndex: 1,
+        }}
+      />
       {safeGuide && (
         <>
           <div style={{ position: "absolute", left: 0, top: 0, width: "100%", height: safeGuide.y, background: "rgba(0,0,0,0.18)", pointerEvents: "none", zIndex: 2 }} />
@@ -674,9 +754,9 @@ function PreviewCard({ cfg }) {
               right: 10,
               top: 10,
               zIndex: 4,
-              fontFamily: "Cinzel,serif",
+              fontFamily: "Inter,sans-serif",
               fontSize: 10,
-              letterSpacing: "0.12em",
+              letterSpacing: "0.03em",
               textTransform: "uppercase",
               color: "rgba(255,255,255,0.9)",
               background: "rgba(0,0,0,0.34)",
@@ -710,13 +790,13 @@ function PreviewCard({ cfg }) {
       >
         {showIcon && !isSplit && <DesignLogoSvg size={iconSz} t={t} isHQ={isHQ} iconStyle={iconStyle} />}
         <div style={{ display: "flex", flexDirection: "column", gap: dh * 0.028, maxWidth: isSplit ? "52%" : "100%", alignItems: isCentered ? "center" : "flex-start" }}>
-          {title && <div style={{ fontFamily: fp.title, fontWeight: 900, fontSize: Math.min(dh * 0.14, dw * 0.052), color: t.text, letterSpacing: -0.5, lineHeight: 1.1 }}>{title}</div>}
+          {title && <div style={{ fontFamily: fp.title, fontWeight: 800, fontSize: typeSizes.title, color: t.text, letterSpacing: -0.2, lineHeight: 1.08 }}>{title}</div>}
           {showDivider && <div style={{ width: Math.min(48, dw * 0.05), height: Math.max(2, dh * 0.006), background: t.accent, borderRadius: 2 }} />}
-          {tagline && <div style={{ fontFamily: fp.body, fontStyle: "italic", fontSize: Math.min(dh * 0.062, dw * 0.022), color: t.sub, lineHeight: 1.45 }}>{tagline}</div>}
-          {description && <div style={{ fontFamily: fp.body, fontSize: Math.min(dh * 0.048, dw * 0.017), color: t.muted, lineHeight: 1.55, maxWidth: "94%" }}>{description}</div>}
+          {tagline && <div style={{ fontFamily: fp.body, fontStyle: "italic", fontSize: typeSizes.tag, color: t.sub, lineHeight: 1.4 }}>{tagline}</div>}
+          {description && <div style={{ fontFamily: fp.body, fontSize: typeSizes.desc, color: t.muted, lineHeight: 1.5, maxWidth: "94%" }}>{description}</div>}
           <div style={{ display: "flex", flexDirection: "column", gap: dh * 0.02, marginTop: dh * 0.01 }}>
             {[website, handle].filter(Boolean).map((m, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: dw * 0.008, fontFamily: fp.tag, fontSize: Math.min(dh * 0.038, dw * 0.014), letterSpacing: "0.1em", color: t.muted }}>
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: dw * 0.008, fontFamily: fp.tag, fontSize: typeSizes.meta, letterSpacing: "0.03em", color: t.muted }}>
                 <span style={{ width: dh * 0.016, height: dh * 0.016, borderRadius: "50%", background: t.accent, flexShrink: 0 }} />
                 {m}
               </div>
@@ -1086,10 +1166,30 @@ export default function App() {
               </span>
               <ToggleGroup value={cfg.plat} onChange={setPlatform} options={platformOptions} />
             </div>
+            <div className="toolbar-group">
+              <span className="toolbar-label">
+                <Type size={12} />
+                Design Font
+              </span>
+              <select className="toolbar-select" value={cfg.fontPair} onChange={(e) => set("fontPair", e.target.value)}>
+                {Object.entries(FONT_PAIRS).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="preview-stage">
             <PreviewCard cfg={cfg} />
+          </div>
+
+          <div className="workspace-actions">
+            <button type="button" onClick={download} disabled={downloading} className="download-under-btn">
+              <Download size={14} />
+              {downloading ? "Saving..." : "Download This Design"}
+            </button>
           </div>
 
           <div className="workspace-meta">
