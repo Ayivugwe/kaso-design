@@ -598,7 +598,23 @@ function getTypographySizes(H, W, metrics, previewMode = false) {
   };
 }
 
-function renderCardCanvas(cfg, W, H, templateKey) {
+function getAspectRect(sw, sh, targetAspect) {
+  if (!targetAspect) {
+    return { x: 0, y: 0, w: sw, h: sh };
+  }
+  const sourceAspect = sw / sh;
+  if (Math.abs(sourceAspect - targetAspect) < 0.0001) {
+    return { x: 0, y: 0, w: sw, h: sh };
+  }
+  if (targetAspect > sourceAspect) {
+    const h = sw / targetAspect;
+    return { x: 0, y: (sh - h) / 2, w: sw, h };
+  }
+  const w = sh * targetAspect;
+  return { x: (sw - w) / 2, y: 0, w, h: sh };
+}
+
+function renderCardCanvas(cfg, W, H, templateKey, targetAspect = null) {
   const { title, tagline, description, website, handle, showIcon, isHQ, iconStyle, layout, fontPair, showDivider, showWatermark } = cfg;
   const t = resolveTheme(cfg);
   const fp = FONT_PAIRS[fontPair];
@@ -627,12 +643,13 @@ function renderCardCanvas(cfg, W, H, templateKey) {
 
   const isCentered = layout === "center";
   const isSplit = layout === "split";
-  const padX = W * metrics.padX;
-  const padY = H * metrics.padY;
-  const contentW = isSplit ? W * 0.52 : W * 0.84;
-  const iconSz = Math.min(H * 0.38, W * 0.12);
-  const startX = isCentered ? W / 2 : padX;
-  const baseSizes = getTypographySizes(H, W, metrics, false);
+  const frame = getAspectRect(W, H, targetAspect);
+  const padX = frame.x + frame.w * metrics.padX;
+  const padY = frame.y + frame.h * metrics.padY;
+  const contentW = isSplit ? frame.w * 0.52 : frame.w * 0.84;
+  const iconSz = Math.min(frame.h * 0.38, frame.w * 0.12);
+  const startX = isCentered ? frame.x + frame.w / 2 : padX;
+  const baseSizes = getTypographySizes(frame.h, frame.w, metrics, false);
 
   const estimateHeight = (sizes) => {
     let total = 0;
@@ -669,8 +686,8 @@ function renderCardCanvas(cfg, W, H, templateKey) {
 
   let fitScale = 1;
   let typeSizes = baseSizes;
-  const startY = isCentered ? (showIcon ? padY + iconSz + H * 0.06 : H * 0.25) : H / 2 - H * 0.22;
-  const maxY = H * 0.93;
+  const startY = isCentered ? (showIcon ? padY + iconSz + frame.h * 0.06 : frame.y + frame.h * 0.25) : frame.y + frame.h / 2 - frame.h * 0.22;
+  const maxY = frame.y + frame.h * 0.93;
   for (let i = 0; i < 12; i += 1) {
     const estimated = estimateHeight(typeSizes);
     if (startY + estimated <= maxY || fitScale <= 0.72) {
@@ -720,7 +737,7 @@ function renderCardCanvas(cfg, W, H, templateKey) {
     const kColor = useWhiteMark ? "white" : kGrad;
     const hqColor = useWhiteMark ? "rgba(255,255,255,0.88)" : t.accentDark;
     drawDesignMonogram(ctx, ix, iy, iconSz, isHQ, kColor, hqColor);
-    iconEndX = isCentered ? W / 2 : ix + iconSz + W * 0.03;
+    iconEndX = isCentered ? frame.x + frame.w / 2 : ix + iconSz + frame.w * 0.03;
   }
 
   const tx = isCentered ? startX : showIcon && !isCentered ? iconEndX : padX;
@@ -734,10 +751,10 @@ function renderCardCanvas(cfg, W, H, templateKey) {
   curY += titleSz * 0.3;
 
   if (showDivider) {
-    const dw = Math.min(56, W * 0.05);
-    const dh = Math.max(2, H * 0.006);
+    const dw = Math.min(56, frame.w * 0.05);
+    const dh = Math.max(2, frame.h * 0.006);
     ctx.fillStyle = t.accent;
-    ctx.fillRect(isCentered ? W / 2 - dw / 2 : tx, curY, dw, dh);
+    ctx.fillRect(isCentered ? frame.x + frame.w / 2 - dw / 2 : tx, curY, dw, dh);
     curY += dh + titleSz * 0.5;
   }
 
@@ -766,7 +783,7 @@ function renderCardCanvas(cfg, W, H, templateKey) {
     metaItems.forEach((m, i) => {
       const my = curY + i * metaSz * 1.8;
       const dotR = metaSz * 0.22;
-      const dotX = isCentered ? W / 2 - ctx.measureText(m).width / 2 - dotR * 3 : tx;
+      const dotX = isCentered ? frame.x + frame.w / 2 - ctx.measureText(m).width / 2 - dotR * 3 : tx;
       ctx.beginPath();
       ctx.arc(dotX + dotR, my - dotR, dotR, 0, Math.PI * 2);
       ctx.fillStyle = t.accent;
@@ -777,8 +794,8 @@ function renderCardCanvas(cfg, W, H, templateKey) {
   }
 
   if (isSplit && showIcon) {
-    const rix = W * 0.62;
-    const riy = H / 2 - iconSz * 0.7;
+    const rix = frame.x + frame.w * 0.62;
+    const riy = frame.y + frame.h / 2 - iconSz * 0.7;
     const kGrad = ctx.createLinearGradient(rix, riy, rix, riy + iconSz * 1.4);
     kGrad.addColorStop(0, t.accent);
     kGrad.addColorStop(1, t.accentDark);
@@ -824,7 +841,7 @@ function renderToCanvas(cfg) {
   const scale = Math.max(target.w / baseCrop.cw, target.h / baseCrop.ch, 1);
   const baseW = Math.round(designSurface.w * scale);
   const baseH = Math.round(designSurface.h * scale);
-  const source = renderCardCanvas(cfg, baseW, baseH, cfg.template);
+  const source = renderCardCanvas(cfg, baseW, baseH, cfg.template, target.w / target.h);
   const crop = getCropRect(baseW, baseH, target.w, target.h);
   const out = document.createElement("canvas");
   out.width = target.w;
@@ -836,7 +853,8 @@ function renderToCanvas(cfg) {
 
 function renderPreviewCanvas(cfg) {
   const designSurface = DESIGN_SURFACES[cfg.template] || DESIGN_SURFACES.horizontal;
-  return renderCardCanvas(cfg, designSurface.w, designSurface.h, cfg.template);
+  const target = PLATFORMS[cfg.plat];
+  return renderCardCanvas(cfg, designSurface.w, designSurface.h, cfg.template, target.w / target.h);
 }
 
 function AppFlowerLogo({ size = 48 }) {

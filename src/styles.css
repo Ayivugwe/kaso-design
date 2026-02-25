@@ -20,6 +20,16 @@ body {
   font-family: Inter, "Manrope", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 
+::selection {
+  background: rgba(37, 99, 235, 0.35);
+  color: #0b1220;
+}
+
+::-moz-selection {
+  background: rgba(37, 99, 235, 0.35);
+  color: #0b1220;
+}
+
 .app-root {
   display: flex;
   height: 100%;
