@@ -704,8 +704,8 @@ function renderCardCanvas(cfg, W, H, templateKey, targetAspect = null) {
 
   let iconEndX = padX;
   if (showIcon) {
-    const ix = isCentered ? W / 2 - iconSz / 2 : padX;
-    const iy = isCentered ? padY : H / 2 - iconSz / 2;
+    const ix = isCentered ? frame.x + frame.w / 2 - iconSz / 2 : padX;
+    const iy = isCentered ? padY : frame.y + frame.h / 2 - iconSz / 2;
     if (iconStyle === "tile") {
       ctx.save();
       roundRect(ctx, ix, iy, iconSz, iconSz, iconSz * 0.187);
