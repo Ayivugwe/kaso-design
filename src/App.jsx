@@ -634,13 +634,6 @@ function renderCardCanvas(cfg, W, H, templateKey, targetAspect = null) {
   }
   ctx.fillRect(0, 0, W, H);
 
-  if (showWatermark) {
-    ctx.save();
-    ctx.globalAlpha = 0.04;
-    drawDesignMonogram(ctx, W * 0.62, H * 0.4, H * 0.85, false, t.text, null);
-    ctx.restore();
-  }
-
   const isCentered = layout === "center";
   const isSplit = layout === "split";
   const frame = getAspectRect(W, H, targetAspect);
@@ -650,6 +643,16 @@ function renderCardCanvas(cfg, W, H, templateKey, targetAspect = null) {
   const iconSz = Math.min(frame.h * 0.38, frame.w * 0.12);
   const startX = isCentered ? frame.x + frame.w / 2 : padX;
   const baseSizes = getTypographySizes(frame.h, frame.w, metrics, false);
+
+  if (showWatermark) {
+    const wmSize = Math.min(frame.h * 0.82, frame.w * 0.55);
+    const wmX = frame.x + frame.w - wmSize * 0.62;
+    const wmY = frame.y + frame.h - wmSize * 0.58;
+    ctx.save();
+    ctx.globalAlpha = 0.04;
+    drawDesignMonogram(ctx, wmX, wmY, wmSize, false, t.text, null);
+    ctx.restore();
+  }
 
   const estimateHeight = (sizes) => {
     let total = 0;
